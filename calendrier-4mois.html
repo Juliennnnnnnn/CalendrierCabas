@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendrier 4 Mois</title>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ══════════════════════════════════════════════════════
+  //  🔧 CONFIGURATION FIREBASE — remplacez par vos valeurs
+  // ══════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCgZjS47NCGWWJScgIyWki0XSubBFmVUdk",
+    authDomain:        "calendrier-cabas-liassoi-be21d.firebaseapp.com",
+    databaseURL:       "https://calendrier-cabas-liassoi-be21d-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "calendrier-cabas-liassoi-be21d",
+    storageBucket:     "calendrier-cabas-liassoi-be21d.firebasestorage.app",
+    messagingSenderId: "427249595179",
+    appId:             "1:427249595179:web:b908f814e6e9fd88d98b6e"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const eventsRef = ref(db, 'events');
+    window._fb = { db, ref, set, onValue, remove, eventsRef };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('firebase-ready'));
+  } catch(e) {
+    document.dispatchEvent(new Event('firebase-failed'));
+  }
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#ddd;--text:#1a1a1a;
+  --muted:#666;--accent:#c0392b;--weekend:#e8e8e8;
+  --navy:#2c3e50;--green:#27ae60;--radius:4px;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:1.35rem;font-weight:600;letter-spacing:-.02em;flex:1}
+
+.badge{padding:4px 12px;border-radius:20px;font-size:.73rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.badge.admin{background:#fef3cd;color:#856404;border:1px solid #ffc107}
+.badge.viewer{background:#d1e7dd;color:#0f5132;border:1px solid #198754}
+
+.btn-sm{padding:5px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text);transition:all .15s}
+.btn-sm:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+.statusbar{font-size:.72rem;color:var(--muted);margin-left:auto}
+.statusbar.ok{color:var(--green)}.statusbar.err{color:var(--accent)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border-radius:10px;padding:28px 32px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal h2{font-size:1rem;font-weight:700;margin-bottom:16px}
+.modal input[type=password]{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.84rem;margin-bottom:12px;outline:none}
+.modal input:focus{border-color:var(--navy)}
+.modal .btn-row{display:flex;gap:8px;margin-top:4px}
+.modal-err{color:var(--accent);font-size:.76rem;margin-bottom:8px;display:none}
+.modal-err.show{display:block}
+
+/* LAYOUT */
+.layout{display:flex;gap:24px;align-items:flex-start}
+
+/* CALENDRIER */
+.calendar-wrap{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-width:0}
+.calendar-title{background:var(--navy);color:#fff;padding:12px 16px;font-size:.85rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+.calendar-grid{display:grid;grid-template-columns:repeat(4,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
+.month-col{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.month-header{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+
+.day-row{display:flex;align-items:flex-start;border-bottom:1px solid var(--border);min-height:24px}
+.day-row.weekend{background:var(--weekend)}
+.day-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);width:22px;text-align:right;padding:3px 4px 0;flex-shrink:0;font-weight:500}
+.day-row.weekend .day-num{color:var(--accent);font-weight:700}
+.day-name{font-size:.7rem;color:var(--muted);width:28px;flex-shrink:0;font-weight:400;padding-top:4px}
+
+.day-label{flex:1;font-size:.76rem;font-weight:600;padding:2px 4px;border-radius:2px;line-height:1.25;min-height:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden}
+.day-label .l1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center}
+.day-label .l2{font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;width:100%;text-align:center}
+
+/* NAV */
+.nav-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.nav-bar button{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text);transition:background .1s}
+.nav-bar button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.nav-bar span{font-size:.82rem;color:var(--muted);font-weight:500}
+
+/* PANNEAU COMMUN */
+.side-panel{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:20px;width:300px;flex-shrink:0}
+.side-panel.hidden{display:none}
+.side-panel h2{font-size:.9rem;font-weight:600;margin-bottom:16px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--border);padding-bottom:8px}
+
+/* FORM */
+.field{margin-bottom:12px}
+label{display:block;font-size:.74rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+input[type=date],input[type=text]{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);background:#fafafa;transition:border-color .15s;outline:none}
+input[type=date]:focus,input[type=text]:focus{border-color:var(--navy);background:#fff}
+.hint{font-size:.68rem;color:#aaa;margin-top:3px;font-style:italic}
+
+.color-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.swatch{width:26px;height:26px;border-radius:4px;cursor:pointer;border:2.5px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0}
+.swatch:hover{transform:scale(1.1)}
+.swatch.sel{border-color:var(--text);transform:scale(1.1)}
+.custom-color{display:flex;align-items:center;gap:6px;margin-top:6px}
+input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border-radius:4px;padding:2px;cursor:pointer;background:none}
+
+.btn{width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:8px}
+.btn:hover{opacity:.85}
+.btn.danger{background:var(--accent);margin-top:4px}
+
+.events-list{margin-top:16px;border-top:2px solid var(--border);padding-top:12px}
+.events-list h3{font-size:.74rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.ev-item{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:4px;background:#f8f8f8;margin-bottom:6px;font-size:.76rem}
+.ev-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0;margin-top:2px}
+.ev-info{flex:1;min-width:0}
+.ev-info strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-info .sub{color:#888;font-size:.67rem;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-info .dates{color:var(--muted);font-size:.68rem}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.9rem;padding:2px 4px;border-radius:2px;flex-shrink:0}
+.del-btn:hover{background:#fee;color:var(--accent)}
+.btn.edit{background:var(--green);margin-top:4px}
+.ev-edit-btn{background:none;border:none;cursor:pointer;color:#2980b9;font-size:.9rem;padding:2px 4px;border-radius:2px;flex-shrink:0}
+.ev-edit-btn:hover{background:#ebf5fb;color:#1a5276}
+.empty-msg{font-size:.72rem;color:#bbb;font-style:italic}
+
+/* LEGENDE VIEWER */
+.leg-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:.77rem}
+.leg-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;margin-top:2px}
+
+/* GUIDE */
+.guide{background:#fffbe6;border:1px solid #ffd000;border-radius:8px;padding:16px 20px;margin-top:32px;font-size:.78rem;line-height:1.65;max-width:900px}
+.guide h3{font-size:.88rem;margin-bottom:8px;color:#7a5800}
+.guide code{background:#fff3cd;border-radius:3px;padding:1px 5px;font-family:'DM Mono',monospace;font-size:.75rem}
+.guide ol{margin-left:18px}
+.guide li{margin-bottom:5px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- MODAL LOGIN -->
+<div class="modal-overlay hidden" id="loginModal">
+  <div class="modal">
+    <h2>🔐 Accès administrateur</h2>
+    <p id="loginErr" class="modal-err">Mot de passe incorrect.</p>
+    <input type="password" id="pwdInput" placeholder="Mot de passe admin…"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="btn-row">
+      <button class="btn" onclick="doLogin()" style="flex:1">Connexion</button>
+      <button class="btn danger" onclick="closeLogin()" style="flex:1;margin-top:0">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <h1>📅 Calendrier 4 Mois</h1>
+  <span class="badge viewer" id="modeBadge">👁 Consultation</span>
+  <button class="btn-sm" id="loginBtn" onclick="openLogin()">Admin</button>
+  <button class="btn-sm hidden" id="logoutBtn" onclick="doLogout()">Déconnexion</button>
+  <span class="statusbar" id="statusbar">⏳ Connexion…</span>
+</div>
+
+<!-- NAV -->
+<div class="nav-bar">
+  <button onclick="shiftMonths(-1)">◀ Préc.</button>
+  <span id="rangeLabel"></span>
+  <button onclick="shiftMonths(1)">Suiv. ▶</button>
+</div>
+
+<div class="layout">
+  <!-- CALENDRIER -->
+  <div class="calendar-wrap">
+    <div class="calendar-title">Calendrier</div>
+    <div class="calendar-grid" id="calGrid"></div>
+  </div>
+
+  <!-- FORMULAIRE ADMIN -->
+  <div class="side-panel hidden" id="formPanel">
+    <h2 id="formTitle">Ajouter un événement</h2>
+    <div class="field"><label>Date début</label><input type="date" id="fStart" onchange="onStartChange()"></div>
+    <div class="field"><label>Date fin</label><input type="date" id="fEnd"></div>
+    <div class="field">
+      <label>Libellé</label>
+      <input type="text" id="fLabel" placeholder="Ex : Commande 72 + Fromage Savoie">
+      <p class="hint">Séparez par <strong>+</strong> pour afficher 2 lignes dans la case</p>
+    </div>
+    <div class="field">
+      <label>Couleur de fond</label>
+      <div class="color-row" id="swatches"></div>
+      <div class="custom-color">
+        <input type="color" id="fColorPicker" value="#c0392b">
+        <span style="font-size:.72rem;color:var(--muted)">Couleur libre</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Couleur du texte</label>
+      <div class="color-row" id="textSwatches"></div>
+    </div>
+    <button class="btn" id="btnSave" onclick="saveEvent()">＋ Ajouter</button>
+    <button class="btn danger hidden" id="btnCancel" onclick="cancelEdit()" style="margin-top:4px">✕ Annuler la modification</button>
+    <div class="events-list">
+      <h3>Événements (<span id="evCount">0</span>)</h3>
+      <div id="evList"><p class="empty-msg">Aucun événement</p></div>
+    </div>
+  </div>
+
+  <!-- LEGENDE VIEWER -->
+  <div class="side-panel" id="viewerPanel">
+    <h2>Légende</h2>
+    <div id="legendList"><p class="empty-msg">Aucun événement</p></div>
+  </div>
+</div>
+
+<!-- GUIDE SETUP -->
+<div class="guide">
+  <h3>⚙️ Guide de mise en place — Firebase + GitHub Pages (gratuit, ~10 min)</h3>
+  <ol>
+    <li><strong>Firebase :</strong> Allez sur <code>console.firebase.google.com</code> → Nouveau projet → <em>Realtime Database</em> → Créer (région europe-west1) → mode Test</li>
+    <li><strong>Clés :</strong> ⚙️ Paramètres → <em>Ajouter une app Web</em> → copiez le bloc <code>firebaseConfig</code> et remplacez les valeurs <code>VOTRE_…</code> dans ce fichier</li>
+    <li><strong>Règles Firebase :</strong> Realtime Database → Règles → collez :
+      <br><code>{ "rules": { ".read": true, "events": { ".write": true } } }</code></li>
+    <li><strong>Hébergement :</strong> Créez un dépôt sur <code>github.com</code>, déposez ce fichier renommé <code>index.html</code>, activez <em>GitHub Pages</em> (Settings → Pages → branche main). Vous obtenez une URL publique gratuite.</li>
+    <li><strong>Google Forms :</strong> Dans votre formulaire, ajoutez une section avec un lien vers cette URL. Tous vos utilisateurs verront le calendrier en consultation sans compte.</li>
+    <li><strong>Accès admin :</strong> Partagez le mot de passe <code>admin2024</code> (changez-le dans <code>ADMIN_PWD</code>) uniquement aux personnes autorisées à modifier le calendrier.</li>
+  </ol>
+  <p style="margin-top:8px;color:#7a5800">Sans Firebase configuré, le calendrier fonctionne en <strong>mode local</strong> (données uniquement dans votre navigateur).</p>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  CONFIG — changez le mot de passe !
+// ════════════════════════════════════════════
+const ADMIN_PWD = 'admin2024';
+
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const DAYS   = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+
+const PALETTE = [
+  '#c0392b','#e67e22','#f1c40f','#27ae60',
+  '#2980b9','#8e44ad','#1abc9c','#2c3e50'
+];
+const TXT_PALETTE = ['#ffffff','#000000','#f5f5f5','#1a1a1a'];
+
+let startOffset = 0;
+let events      = [];
+let isAdmin     = false;
+let fbReady     = false;
+let selColor    = '#c0392b';
+let selTxtColor = '#ffffff';
+
+// ── Firebase ────────────────────────────────
+function initFirebase() {
+  const { onValue, eventsRef } = window._fb;
+  onValue(eventsRef, snap => {
+    const d = snap.val();
+    events = d ? Object.values(d) : [];
+    renderAll();
+    setStatus('✅ Synchronisé','ok');
+  }, () => {
+    setStatus('ℹ️ Mode local','');
+    loadLocal();
+  });
+}
+
+function saveFb() {
+  if (!fbReady) { saveLocal(); return; }
+  const { set, eventsRef } = window._fb;
+  const obj = {};
+  events.forEach(e => { obj[e.id] = e; });
+  set(eventsRef, obj)
+    .then(() => setStatus('✅ Sauvegardé','ok'))
+    .catch(() => { saveLocal(); setStatus('⚠️ Sauvegarde locale',''); });
+}
+
+function delFb(id) {
+  if (!fbReady) { saveLocal(); return; }
+  const { ref, remove, db } = window._fb;
+  remove(ref(db, 'events/' + id));
+}
+
+function saveLocal() { localStorage.setItem('calEvents', JSON.stringify(events)); }
+function loadLocal()  {
+  events = JSON.parse(localStorage.getItem('calEvents') || '[]');
+  renderAll();
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('statusbar');
+  el.textContent = msg; el.className = 'statusbar ' + cls;
+}
+
+// ── Auth ─────────────────────────────────────
+function openLogin()  { document.getElementById('loginModal').classList.remove('hidden'); document.getElementById('pwdInput').focus(); }
+function closeLogin() { document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginErr').classList.remove('show'); }
+
+function doLogin() {
+  if (document.getElementById('pwdInput').value === ADMIN_PWD) {
+    isAdmin = true;
+    sessionStorage.setItem('calAdmin','1');
+    document.getElementById('pwdInput').value = '';
+    closeLogin();
+    applyMode();
+  } else {
+    document.getElementById('loginErr').classList.add('show');
+  }
+}
+
+function doLogout() {
+  isAdmin = false;
+  sessionStorage.removeItem('calAdmin');
+  applyMode();
+}
+
+function applyMode() {
+  const admin = isAdmin;
+  document.getElementById('modeBadge').textContent  = admin ? '🔧 Administrateur' : '👁 Consultation';
+  document.getElementById('modeBadge').className    = 'badge ' + (admin ? 'admin' : 'viewer');
+  document.getElementById('formPanel').classList.toggle('hidden', !admin);
+  document.getElementById('viewerPanel').classList.toggle('hidden', admin);
+  document.getElementById('loginBtn').classList.toggle('hidden', admin);
+  document.getElementById('logoutBtn').classList.toggle('hidden', !admin);
+  renderAll();
+}
+
+// ── Swatches ─────────────────────────────────
+function buildSwatches() {
+  buildGroup('swatches', PALETTE, () => selColor, v => {
+    selColor = v;
+    document.getElementById('fColorPicker').value = v;
+  });
+  buildGroup('textSwatches', TXT_PALETTE, () => selTxtColor, v => { selTxtColor = v; }, true);
+
+  document.getElementById('fColorPicker').addEventListener('input', e => {
+    selColor = e.target.value;
+    document.querySelectorAll('#swatches .swatch').forEach(x => x.classList.remove('sel'));
+  });
+}
+
+function buildGroup(containerId, colors, getSelected, setSelected, border) {
+  const c = document.getElementById(containerId);
+  colors.forEach(color => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (color === getSelected() ? ' sel' : '');
+    s.style.background = color;
+    s.dataset.color = color;
+    if (border) s.style.border = color === '#ffffff' ? '2px solid #ccc' : '2px solid transparent';
+    s.onclick = () => {
+      c.querySelectorAll('.swatch').forEach(x => x.classList.remove('sel'));
+      s.classList.add('sel');
+      setSelected(color);
+    };
+    c.appendChild(s);
+  });
+}
+
+// ── Calendrier ───────────────────────────────
+function getMonths() {
+  const now  = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth() + startOffset, 1);
+  return [0,1,2,3].map(i => {
+    const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+}
+
+const daysInMonth = (y, m) => new Date(y, m+1, 0).getDate();
+const toIso = (y, m, d) => `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const fmtDate = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
+
+function evForDay(iso) {
+  return events.find(e => iso >= e.start && iso <= e.end) || null;
+}
+
+function parseLabel(raw) {
+  const p = raw.split('+').map(s => s.trim()).filter(Boolean);
+  return { l1: p[0] || '', l2: p[1] || '' };
+}
+
+function renderCalendar() {
+  const months = getMonths();
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const f = months[0], l = months[3];
+  document.getElementById('rangeLabel').textContent =
+    `${MONTHS[f.month]} ${f.year} → ${MONTHS[l.month]} ${l.year}`;
+
+  months.forEach(({ year, month }) => {
+    const col = document.createElement('div');
+    col.className = 'month-col';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'month-header';
+    hdr.textContent = `${MONTHS[month]} ${year}`;
+    col.appendChild(hdr);
+
+    const days = daysInMonth(year, month);
+    const shown = new Set();
+
+    for (let d = 1; d <= days; d++) {
+      const iso  = toIso(year, month, d);
+      const dow  = new Date(year, month, d).getDay();
+      const wknd = dow === 0 || dow === 6;
+      const ev   = evForDay(iso);
+
+      const row = document.createElement('div');
+      row.className = 'day-row' + (wknd ? ' weekend' : '');
+
+      const numEl = document.createElement('div');
+      numEl.className = 'day-num';
+      numEl.textContent = d;
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'day-name';
+      nameEl.textContent = DAYS[dow];
+
+      const lblEl = document.createElement('div');
+      lblEl.className = 'day-label';
+
+      if (ev) {
+        // Trouver le premier jour de l'événement dans ce mois
+        const monthStart = toIso(year, month, 1);
+        const evStartInMonth = ev.start > monthStart ? ev.start : monthStart;
+        const firstDay = parseInt(evStartInMonth.split('-')[2]);
+
+        row.style.background = ev.color;
+        lblEl.style.color = ev.textColor || '#fff';
+
+        if (d === firstDay && !shown.has(ev.id)) {
+          const { l1, l2 } = parseLabel(ev.label);
+          const s1 = document.createElement('span'); s1.className = 'l1'; s1.textContent = l1;
+          lblEl.appendChild(s1);
+          if (l2) {
+            const s2 = document.createElement('span'); s2.className = 'l2'; s2.textContent = l2;
+            lblEl.appendChild(s2);
+          }
+          shown.add(ev.id);
+        }
+      }
+
+      row.appendChild(numEl);
+      row.appendChild(nameEl);
+      row.appendChild(lblEl);
+      col.appendChild(row);
+    }
+    grid.appendChild(col);
+  });
+}
+
+// ── Ajout / édition / suppression ───────────
+let editingId = null;
+
+function onStartChange() {
+  const s = document.getElementById('fStart').value;
+  const e = document.getElementById('fEnd').value;
+  if (s && (!e || e < s)) document.getElementById('fEnd').value = s;
+}
+
+function saveEvent() {
+  const start = document.getElementById('fStart').value;
+  const end   = document.getElementById('fEnd').value;
+  const label = document.getElementById('fLabel').value.trim();
+  if (!start || !end || !label) { alert('Remplissez tous les champs.'); return; }
+  if (start > end) { alert('Date début > date fin.'); return; }
+
+  if (editingId !== null) {
+    const idx = events.findIndex(e => e.id === editingId);
+    if (idx !== -1) events[idx] = { id: editingId, start, end, label, color: selColor, textColor: selTxtColor };
+    editingId = null;
+  } else {
+    events.push({ id: Date.now(), start, end, label, color: selColor, textColor: selTxtColor });
+  }
+
+  saveFb();
+  resetForm();
+  renderAll();
+}
+
+function editEvent(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  editingId = id;
+
+  document.getElementById('fStart').value = ev.start;
+  document.getElementById('fEnd').value   = ev.end;
+  document.getElementById('fLabel').value = ev.label;
+
+  // Couleur fond
+  selColor = ev.color;
+  document.getElementById('fColorPicker').value = ev.color;
+  document.querySelectorAll('#swatches .swatch').forEach(s => {
+    s.classList.toggle('sel', s.style.background === hexToRgb(ev.color) || s.dataset.color === ev.color);
+  });
+  // Couleur texte
+  selTxtColor = ev.textColor || '#ffffff';
+  document.querySelectorAll('#textSwatches .swatch').forEach(s => {
+    s.classList.toggle('sel', s.dataset.color === selTxtColor);
+  });
+
+  document.getElementById('formTitle').textContent = 'Modifier un événement';
+  document.getElementById('btnSave').textContent   = '✔ Enregistrer';
+  document.getElementById('btnCancel').classList.remove('hidden');
+  document.getElementById('formPanel').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function cancelEdit() {
+  editingId = null;
+  resetForm();
+}
+
+function resetForm() {
+  document.getElementById('fStart').value = '';
+  document.getElementById('fEnd').value   = '';
+  document.getElementById('fLabel').value = '';
+  selColor    = '#c0392b';
+  selTxtColor = '#ffffff';
+  document.getElementById('fColorPicker').value = '#c0392b';
+  document.querySelectorAll('#swatches .swatch').forEach((s,i) => s.classList.toggle('sel', i===0));
+  document.querySelectorAll('#textSwatches .swatch').forEach((s,i) => s.classList.toggle('sel', i===0));
+  document.getElementById('formTitle').textContent = 'Ajouter un événement';
+  document.getElementById('btnSave').textContent   = '＋ Ajouter';
+  document.getElementById('btnCancel').classList.add('hidden');
+}
+
+function hexToRgb(hex) {
+  // Pas utilisé pour la comparaison, juste utilitaire
+  return hex;
+}
+
+function deleteEvent(id) {
+  if (editingId === id) cancelEdit();
+  events = events.filter(e => e.id !== id);
+  delFb(id);
+  if (!fbReady) saveLocal();
+  renderAll();
+}
+
+// ── Listes ───────────────────────────────────
+function renderEventList() {
+  const container = document.getElementById('evList');
+  document.getElementById('evCount').textContent = events.length;
+  if (!events.length) { container.innerHTML = '<p class="empty-msg">Aucun événement</p>'; return; }
+  container.innerHTML = '';
+  [...events].sort((a,b)=>a.start.localeCompare(b.start)).forEach(ev => {
+    const { l1, l2 } = parseLabel(ev.label);
+    const item = document.createElement('div'); item.className = 'ev-item';
+    const dot  = document.createElement('div'); dot.className = 'ev-dot'; dot.style.background = ev.color;
+    const info = document.createElement('div'); info.className = 'ev-info';
+    info.innerHTML = `<strong>${l1}</strong>${l2?`<span class="sub">${l2}</span>`:''}<span class="dates">${fmtDate(ev.start)} → ${fmtDate(ev.end)}</span>`;
+    const edt = document.createElement('button'); edt.className = 'ev-edit-btn'; edt.textContent = '✏️';
+    edt.title = 'Modifier'; edt.onclick = () => editEvent(ev.id);
+    const del = document.createElement('button'); del.className = 'del-btn'; del.textContent = '✕';
+    del.title = 'Supprimer'; del.onclick = () => deleteEvent(ev.id);
+    item.appendChild(dot); item.appendChild(info); item.appendChild(edt); item.appendChild(del);
+    container.appendChild(item);
+  });
+}
+
+function renderLegend() {
+  const c = document.getElementById('legendList');
+  if (!events.length) { c.innerHTML = '<p class="empty-msg">Aucun événement</p>'; return; }
+  c.innerHTML = '';
+  [...events].sort((a,b)=>a.start.localeCompare(b.start)).forEach(ev => {
+    const { l1, l2 } = parseLabel(ev.label);
+    const item = document.createElement('div'); item.className = 'leg-item';
+    const dot  = document.createElement('div'); dot.className = 'leg-dot'; dot.style.background = ev.color;
+    const txt  = document.createElement('div');
+    txt.innerHTML = `<strong>${l1}</strong>${l2?`<br><span style="font-size:.68rem;color:#888">${l2}</span>`:''}<br><span style="font-size:.67rem;color:#aaa">${fmtDate(ev.start)} → ${fmtDate(ev.end)}</span>`;
+    item.appendChild(dot); item.appendChild(txt);
+    c.appendChild(item);
+  });
+}
+
+function shiftMonths(d) { startOffset += d; renderCalendar(); }
+
+function renderAll() {
+  renderCalendar();
+  if (isAdmin) renderEventList(); else renderLegend();
+}
+
+// ── Init ─────────────────────────────────────
+buildSwatches();
+if (sessionStorage.getItem('calAdmin') === '1') isAdmin = true;
+applyMode();
+
+document.addEventListener('firebase-ready', () => { fbReady = true; initFirebase(); });
+document.addEventListener('firebase-failed', () => { setStatus('ℹ️ Mode local',''); loadLocal(); });
+setTimeout(() => {
+  if (!fbReady) { setStatus('ℹ️ Mode local (Firebase non configuré)',''); loadLocal(); }
+}, 2500);
+</script>
+</body>
+</html>
