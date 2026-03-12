@@ -221,27 +221,10 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
     </div>
   </div>
 
-  <!-- LEGENDE VIEWER -->
-  <div class="side-panel" id="viewerPanel">
-    <h2>Légende</h2>
-    <div id="legendList"><p class="empty-msg">Aucun événement</p></div>
-  </div>
+
 </div>
 
-<!-- GUIDE SETUP -->
-<div class="guide">
-  <h3>⚙️ Guide de mise en place — Firebase + GitHub Pages (gratuit, ~10 min)</h3>
-  <ol>
-    <li><strong>Firebase :</strong> Allez sur <code>console.firebase.google.com</code> → Nouveau projet → <em>Realtime Database</em> → Créer (région europe-west1) → mode Test</li>
-    <li><strong>Clés :</strong> ⚙️ Paramètres → <em>Ajouter une app Web</em> → copiez le bloc <code>firebaseConfig</code> et remplacez les valeurs <code>VOTRE_…</code> dans ce fichier</li>
-    <li><strong>Règles Firebase :</strong> Realtime Database → Règles → collez :
-      <br><code>{ "rules": { ".read": true, "events": { ".write": true } } }</code></li>
-    <li><strong>Hébergement :</strong> Créez un dépôt sur <code>github.com</code>, déposez ce fichier renommé <code>index.html</code>, activez <em>GitHub Pages</em> (Settings → Pages → branche main). Vous obtenez une URL publique gratuite.</li>
-    <li><strong>Google Forms :</strong> Dans votre formulaire, ajoutez une section avec un lien vers cette URL. Tous vos utilisateurs verront le calendrier en consultation sans compte.</li>
-    <li><strong>Accès admin :</strong> Partagez le mot de passe <code>admin2024</code> (changez-le dans <code>ADMIN_PWD</code>) uniquement aux personnes autorisées à modifier le calendrier.</li>
-  </ol>
-  <p style="margin-top:8px;color:#7a5800">Sans Firebase configuré, le calendrier fonctionne en <strong>mode local</strong> (données uniquement dans votre navigateur).</p>
-</div>
+
 
 <script>
 // ════════════════════════════════════════════
@@ -334,7 +317,6 @@ function applyMode() {
   document.getElementById('modeBadge').textContent  = admin ? '🔧 Administrateur' : '👁 Consultation';
   document.getElementById('modeBadge').className    = 'badge ' + (admin ? 'admin' : 'viewer');
   document.getElementById('formPanel').classList.toggle('hidden', !admin);
-  document.getElementById('viewerPanel').classList.toggle('hidden', admin);
   document.getElementById('loginBtn').classList.toggle('hidden', admin);
   document.getElementById('logoutBtn').classList.toggle('hidden', !admin);
   renderAll();
@@ -593,7 +575,7 @@ function shiftMonths(d) { startOffset += d; renderCalendar(); }
 
 function renderAll() {
   renderCalendar();
-  if (isAdmin) renderEventList(); else renderLegend();
+  if (isAdmin) renderEventList();
 }
 
 // ── Init ─────────────────────────────────────
