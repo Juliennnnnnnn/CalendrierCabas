@@ -48,15 +48,10 @@
   --shadow:0 2px 12px rgba(0,0,0,.08);
 }
 
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:12px}
 
-/* TOP BAR */
-.topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-h1{font-size:1.35rem;font-weight:600;letter-spacing:-.02em;flex:1}
-
-.badge{padding:4px 12px;border-radius:20px;font-size:.73rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.badge.admin{background:#fef3cd;color:#856404;border:1px solid #ffc107}
-.badge.viewer{background:#d1e7dd;color:#0f5132;border:1px solid #198754}
+/* TOP BAR ADMIN */
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
 
 .btn-sm{padding:5px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text);transition:all .15s}
 .btn-sm:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -80,7 +75,6 @@ h1{font-size:1.35rem;font-weight:600;letter-spacing:-.02em;flex:1}
 
 /* CALENDRIER */
 .calendar-wrap{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-width:0}
-.calendar-title{background:var(--navy);color:#fff;padding:12px 16px;font-size:.85rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
 .calendar-grid{display:grid;grid-template-columns:repeat(4,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
 .month-col{border-right:1px solid var(--border);display:flex;flex-direction:column}
 .month-header{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
@@ -96,7 +90,7 @@ h1{font-size:1.35rem;font-weight:600;letter-spacing:-.02em;flex:1}
 .day-label .l2{font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;width:100%;text-align:center}
 
 /* NAV */
-.nav-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.nav-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
 .nav-bar button{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text);transition:background .1s}
 .nav-bar button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
 .nav-bar span{font-size:.82rem;color:var(--muted);font-weight:500}
@@ -168,12 +162,10 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
   </div>
 </div>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <h1>📅 Calendrier 4 Mois</h1>
-  <span class="badge viewer" id="modeBadge">👁 Consultation</span>
-  <button class="btn-sm" id="loginBtn" onclick="openLogin()">Admin</button>
-  <button class="btn-sm hidden" id="logoutBtn" onclick="doLogout()">Déconnexion</button>
+<!-- TOP BAR ADMIN uniquement -->
+<div class="topbar hidden" id="adminBar">
+  <span style="font-size:.8rem;font-weight:600;color:var(--muted)">🔧 Mode Admin</span>
+  <button class="btn-sm" id="logoutBtn" onclick="doLogout()">Déconnexion</button>
   <span class="statusbar" id="statusbar">⏳ Connexion…</span>
 </div>
 
@@ -187,7 +179,6 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 <div class="layout">
   <!-- CALENDRIER -->
   <div class="calendar-wrap">
-    <div class="calendar-title">Calendrier</div>
     <div class="calendar-grid" id="calGrid"></div>
   </div>
 
@@ -230,7 +221,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 // ════════════════════════════════════════════
 //  CONFIG — changez le mot de passe !
 // ════════════════════════════════════════════
-const ADMIN_PWD = 'admin2024';
+const ADMIN_PWD = 'CabasLias2025';
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin',
                 'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -309,16 +300,17 @@ function doLogin() {
 function doLogout() {
   isAdmin = false;
   sessionStorage.removeItem('calAdmin');
+  // Retirer ?admin de l'URL sans recharger
+  const url = new URL(window.location);
+  url.searchParams.delete('admin');
+  window.history.replaceState({}, '', url);
   applyMode();
 }
 
 function applyMode() {
   const admin = isAdmin;
-  document.getElementById('modeBadge').textContent  = admin ? '🔧 Administrateur' : '👁 Consultation';
-  document.getElementById('modeBadge').className    = 'badge ' + (admin ? 'admin' : 'viewer');
+  document.getElementById('adminBar').classList.toggle('hidden', !admin);
   document.getElementById('formPanel').classList.toggle('hidden', !admin);
-  document.getElementById('loginBtn').classList.toggle('hidden', admin);
-  document.getElementById('logoutBtn').classList.toggle('hidden', !admin);
   renderAll();
 }
 
@@ -580,14 +572,25 @@ function renderAll() {
 
 // ── Init ─────────────────────────────────────
 buildSwatches();
+
+// Restaurer session admin
 if (sessionStorage.getItem('calAdmin') === '1') isAdmin = true;
+
+// Accès admin via ?admin dans l'URL
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('admin') && !isAdmin) {
+  // Ouvre automatiquement la modal de login
+  document.addEventListener('DOMContentLoaded', () => openLogin());
+  setTimeout(() => openLogin(), 100);
+}
+
 applyMode();
 
 document.addEventListener('firebase-ready', () => { fbReady = true; initFirebase(); });
 document.addEventListener('firebase-failed', () => { setStatus('ℹ️ Mode local',''); loadLocal(); });
 setTimeout(() => {
-  if (!fbReady) { setStatus('ℹ️ Mode local (Firebase non configuré)',''); loadLocal(); }
-}, 2500);
+  if (!fbReady) { setStatus('ℹ️ Mode local',''); loadLocal(); }
+}, 1500);
 </script>
 </body>
 </html>
