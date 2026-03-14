@@ -226,7 +226,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version" style="color:#333">v11 — 14/03/2025</div>
+<div class="version" style="color:#333">v12 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -459,7 +459,7 @@ function renderCalendar() {
       tdName.className = 'td-name';
       tdName.style.width = '26px';
       tdName.style.background = wknd ? 'var(--weekend)' : '#fff';
-      tdName.textContent = DAYS[dow];
+      tdName.textContent = ' ' + DAYS[dow];
       tr.appendChild(tdName);
 
       // Cellule label — avec rowspan si événement multi-jours
