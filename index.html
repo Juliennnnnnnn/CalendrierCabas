@@ -76,17 +76,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* CALENDRIER TABLE */
 .calendar-wrap{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-width:0}
 .cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
-.cal-table th{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b}
-.cal-table th:last-child{border-right:none}
+col.col-num{width:22px}
+col.col-day{width:30px}
+col.col-lbl{width:auto}
+.cal-table thead tr th.th-month{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b}
+.cal-table thead tr th.th-month:last-child{border-right:none}
 .cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
 .td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500;border-right:none!important}
-.td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 2px;white-space:nowrap;border-right:none!important}
+.td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 2px;white-space:nowrap;border-right:none!important;border-left:none!important}
 .td-label{font-size:.76rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden;border-left:none!important}
 .td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .td-label .l2{display:block;font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 tr.weekend td{background:var(--weekend)}
 tr.weekend .td-num{color:var(--accent);font-weight:700}
-td.ev-cell{border-left:none;border-right:1px solid var(--border)}
+td.ev-cell{border-left:none!important}
 
 /* NAV */
 .nav-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
@@ -181,10 +184,10 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
   <div class="calendar-wrap">
     <table class="cal-table" id="calGrid">
       <colgroup>
-        <col style="width:18px"><col style="width:26px"><col>
-        <col style="width:18px"><col style="width:26px"><col>
-        <col style="width:18px"><col style="width:26px"><col>
-        <col style="width:18px"><col style="width:26px"><col>
+        <col class="col-num"><col class="col-day"><col class="col-lbl">
+        <col class="col-num"><col class="col-day"><col class="col-lbl">
+        <col class="col-num"><col class="col-day"><col class="col-lbl">
+        <col class="col-num"><col class="col-day"><col class="col-lbl">
       </colgroup>
     </table>
   </div>
@@ -223,7 +226,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version">v6 — 14/03/2025</div>
+<div class="version">v7 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -398,12 +401,13 @@ function renderCalendar() {
     return { year, month, days: arr };
   });
 
-  // Ligne d'en-têtes des mois
+  // Ligne d'en-têtes des mois — un th par groupe de 3 colonnes via colspan
   const thead = document.createElement('thead');
   const hdrRow = document.createElement('tr');
   months.forEach(({year, month}) => {
     const th = document.createElement('th');
-    th.colSpan = 3; // num + name + label
+    th.colSpan = 3;
+    th.className = 'th-month';
     th.textContent = `${MONTHS[month]} ${year}`;
     hdrRow.appendChild(th);
   });
