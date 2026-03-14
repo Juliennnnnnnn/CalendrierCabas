@@ -219,7 +219,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version">v20 — 14/03/2025</div>
+<div class="version">v21 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -386,6 +386,15 @@ function renderCalendar() {
   const f = months[0], l = months[nb-1];
   document.getElementById('rangeLabel').textContent =
     `${MONTHS[f.month]} ${f.year} → ${MONTHS[l.month]} ${l.year}`;
+
+  // Colgroup : col-num fixe à 55px, col-lbl prend le reste
+  const cg = document.createElement('colgroup');
+  months.forEach(() => {
+    const cNum = document.createElement('col'); cNum.style.width = '55px';
+    const cLbl = document.createElement('col');
+    cg.appendChild(cNum); cg.appendChild(cLbl);
+  });
+  table.appendChild(cg);
 
   // THEAD : 1 th par mois, colspan=2 (col-num + col-label)
   const thead  = document.createElement('thead');
