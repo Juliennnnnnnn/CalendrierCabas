@@ -182,14 +182,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 <div class="layout">
   <!-- CALENDRIER -->
   <div class="calendar-wrap">
-    <table class="cal-table" id="calGrid">
-      <colgroup>
-        <col class="col-num"><col class="col-lbl">
-        <col class="col-num"><col class="col-lbl">
-        <col class="col-num"><col class="col-lbl">
-        <col class="col-num"><col class="col-lbl">
-      </colgroup>
-    </table>
+    <table class="cal-table" id="calGrid"></table>
   </div>
 
   <!-- FORMULAIRE ADMIN -->
@@ -226,7 +219,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version">v16 — 14/03/2025</div>
+<div class="version">v20 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -357,10 +350,15 @@ function buildGroup(containerId, colors, getSelected, setSelected, border) {
 }
 
 // ── Calendrier ───────────────────────────────
+function getNbMonths() {
+  return window.innerWidth < 700 ? 2 : 4;
+}
+
 function getMonths() {
+  const nb   = getNbMonths();
   const now  = new Date();
   const base = new Date(now.getFullYear(), now.getMonth() + startOffset, 1);
-  return [0,1,2,3].map(i => {
+  return Array.from({length: nb}, (_, i) => {
     const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
     return { year: d.getFullYear(), month: d.getMonth() };
   });
@@ -381,15 +379,38 @@ function parseLabel(raw) {
 
 function renderCalendar() {
   const months  = getMonths();
+  const nb      = months.length;
   const table   = document.getElementById('calGrid');
   table.innerHTML = '';
 
-  const f = months[0], l = months[3];
+  const f = months[0], l = months[nb-1];
   document.getElementById('rangeLabel').textContent =
     `${MONTHS[f.month]} ${f.year} → ${MONTHS[l.month]} ${l.year}`;
 
-  // Pré-calcul : pour chaque mois, tableau de jours avec info événement
-  // Structure par mois : [{day, dow, iso, ev}]
+  // THEAD : 1 th par mois, colspan=2 (col-num + col-label)
+  const thead  = document.createElement('thead');
+  const hdrRow = document.createElement('tr');
+  months.forEach(({year, month}, idx) => {
+    const th = document.createElement('th');
+    th.colSpan = 2;
+    th.textContent = `${MONTHS[month]} ${year}`;
+    th.style.cssText = [
+      'background:var(--navy)',
+      'color:#fff',
+      'text-align:center',
+      'padding:8px 4px',
+      'font-size:.82rem',
+      'font-weight:600',
+      'text-transform:uppercase',
+      'letter-spacing:.08em',
+      idx < nb-1 ? 'border-right:1px solid #3d556b' : 'border-right:none'
+    ].join(';');
+    hdrRow.appendChild(th);
+  });
+  thead.appendChild(hdrRow);
+  table.appendChild(thead);
+
+  // Pré-calcul jours par mois
   const monthsData = months.map(({year, month}) => {
     const days = daysInMonth(year, month);
     const arr  = [];
@@ -401,98 +422,63 @@ function renderCalendar() {
     return { year, month, days: arr };
   });
 
-  // Ligne d'en-têtes des mois — 3 th par mois avec largeurs forcées
-  const thead = document.createElement('thead');
-  const hdrRow = document.createElement('tr');
-  months.forEach(({year, month}) => {
-    const thNum = document.createElement('th');
-    thNum.colSpan = 2;
-    thNum.style.cssText = 'width:46px;max-width:46px;background:var(--navy);color:#fff;padding:8px 0;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:none';
-    hdrRow.appendChild(thNum);
-
-    const thLbl = document.createElement('th');
-    thLbl.style.cssText = 'background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b';
-    thLbl.textContent = `${MONTHS[month]} ${year}`;
-    hdrRow.appendChild(thLbl);
-  });
-  thead.appendChild(hdrRow);
-  table.appendChild(thead);
-
-  // Corps : on construit ligne par ligne (index de jour 0..maxDays-1)
-  const maxDays = Math.max(...monthsData.map(m => m.days.length));
-  const tbody   = document.createElement('tbody');
-
-  // Pour chaque mois, on suit quels jours sont "absorbés" par un rowspan
-  // skippedUntil[mIdx] = numéro du jour jusqu'auquel on saute (exclusif)
+  const maxDays      = Math.max(...monthsData.map(m => m.days.length));
+  const tbody        = document.createElement('tbody');
   const skippedUntil = monthsData.map(() => 0);
 
   for (let i = 0; i < maxDays; i++) {
     const tr = document.createElement('tr');
-    let isWeekendRow = false;
 
     monthsData.forEach((mData, mIdx) => {
       if (i >= mData.days.length) {
-        // Mois plus court : cellule vide
-        const td = document.createElement('td'); td.colSpan = 3;
+        // Mois plus court : 2 cellules vides
+        const td = document.createElement('td');
+        td.colSpan = 2;
+        td.style.borderRight = mIdx < nb-1 ? '1px solid var(--border)' : '';
         tr.appendChild(td);
         return;
       }
 
       const { day, dow, iso, ev } = mData.days[i];
       const wknd = dow === 0 || dow === 6;
-      if (wknd) isWeekendRow = true;
+      const bg   = wknd ? 'var(--weekend)' : '#fff';
+      const clr  = wknd ? 'var(--accent)'  : 'var(--muted)';
 
-      // Cellule numéro + jour fusionnés
+      // --- Cellule num+jour (largeur fixe 52px) ---
       const tdNum = document.createElement('td');
-      tdNum.className = 'td-num';
-      tdNum.colSpan = 2;
-      tdNum.style.width = '46px';
-      tdNum.style.background = wknd ? 'var(--weekend)' : '#fff';
-      tdNum.style.whiteSpace = 'nowrap';
-      tdNum.style.paddingRight = '4px';
-      if (wknd) tdNum.style.color = 'var(--accent)';
+      tdNum.style.cssText = `width:52px;max-width:52px;background:${bg};color:${clr};white-space:nowrap;padding:2px 4px 0;border-right:none;vertical-align:middle`;
 
-      const numSpan = document.createElement('span');
-      numSpan.style.fontFamily = "'DM Mono', monospace";
-      numSpan.style.fontSize = '.72rem';
-      numSpan.style.fontWeight = '500';
+      const numSpan  = document.createElement('span');
+      numSpan.style.cssText = "font-family:'DM Mono',monospace;font-size:.72rem;font-weight:" + (wknd?'700':'500');
       numSpan.textContent = day;
 
       const nameSpan = document.createElement('span');
-      nameSpan.style.fontSize = '.7rem';
-      nameSpan.style.marginLeft = '4px';
-      nameSpan.style.color = wknd ? 'inherit' : 'var(--muted)';
+      nameSpan.style.cssText = 'font-size:.7rem;margin-left:4px;color:' + clr;
       nameSpan.textContent = DAYS[dow];
 
       tdNum.appendChild(numSpan);
       tdNum.appendChild(nameSpan);
       tr.appendChild(tdNum);
 
-      // Cellule label — avec rowspan si événement multi-jours
-      if (skippedUntil[mIdx] > i) {
-        // Ce jour est couvert par un rowspan précédent, on ne crée pas de td
-        return;
-      }
+      // --- Cellule label (prend le reste) ---
+      if (skippedUntil[mIdx] > i) return; // absorbée par rowspan
 
       const tdLabel = document.createElement('td');
       tdLabel.className = 'td-label';
-      tdLabel.style.background = wknd ? 'var(--weekend)' : '#fff';
+      tdLabel.style.background = bg;
+      if (mIdx < nb-1) tdLabel.style.borderRight = '1px solid var(--border)';
 
       if (ev) {
-        // Calculer combien de jours l'événement couvre dans CE mois à partir d'aujourd'hui
         const monthEnd = toIso(mData.year, mData.month, mData.days.length);
         const evEnd    = ev.end < monthEnd ? ev.end : monthEnd;
         const spanDays = Math.round((new Date(evEnd) - new Date(iso)) / 86400000) + 1;
-
         if (spanDays > 1) {
           tdLabel.rowSpan = spanDays;
           skippedUntil[mIdx] = i + spanDays;
         }
-
-        tdLabel.style.background  = ev.color;
-        tdLabel.style.color       = ev.textColor || '#fff';
+        tdLabel.style.background    = ev.color;
+        tdLabel.style.color         = ev.textColor || '#fff';
         tdLabel.style.verticalAlign = 'middle';
-        tdLabel.classList.add('ev-cell');
 
         const { l1, l2 } = parseLabel(ev.label);
         const s1 = document.createElement('span'); s1.className = 'l1'; s1.textContent = l1;
@@ -506,7 +492,6 @@ function renderCalendar() {
       tr.appendChild(tdLabel);
     });
 
-    if (isWeekendRow) tr.className = 'weekend';
     tbody.appendChild(tr);
   }
 
@@ -670,6 +655,13 @@ document.addEventListener('firebase-failed', () => { setStatus('ℹ️ Mode loca
 setTimeout(() => {
   if (!fbReady) { setStatus('ℹ️ Mode local',''); loadLocal(); }
 }, 1500);
+
+// Redessiner si rotation/resize
+let _lastNb = getNbMonths();
+window.addEventListener('resize', () => {
+  const nb = getNbMonths();
+  if (nb !== _lastNb) { _lastNb = nb; renderCalendar(); }
+});
 </script>
 </body>
 </html>
