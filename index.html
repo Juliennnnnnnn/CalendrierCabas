@@ -83,7 +83,7 @@ col.col-lbl{width:auto}
 .cal-table thead tr th.th-month:last-child{border-right:none}
 .cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
 .td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500;border-right:none!important}
-.td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 2px;white-space:nowrap;border-right:none!important;border-left:none!important}
+.td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 4px;white-space:nowrap;border-right:none!important;border-left:none!important}
 .td-label{font-size:.76rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden;border-left:none!important}
 .td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .td-label .l2{display:block;font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
@@ -226,7 +226,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version" style="color:#333">v9 — 14/03/2025</div>
+<div class="version" style="color:#333">v11 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -449,14 +449,16 @@ function renderCalendar() {
       const tdNum = document.createElement('td');
       tdNum.className = 'td-num';
       tdNum.style.width = '18px';
-      tdNum.textContent = day;
+      tdNum.style.background = wknd ? 'var(--weekend)' : '#fff';
       if (wknd) tdNum.style.color = 'var(--accent)';
+      tdNum.textContent = day;
       tr.appendChild(tdNum);
 
       // Cellule nom du jour
       const tdName = document.createElement('td');
       tdName.className = 'td-name';
       tdName.style.width = '26px';
+      tdName.style.background = wknd ? 'var(--weekend)' : '#fff';
       tdName.textContent = DAYS[dow];
       tr.appendChild(tdName);
 
@@ -468,6 +470,7 @@ function renderCalendar() {
 
       const tdLabel = document.createElement('td');
       tdLabel.className = 'td-label';
+      tdLabel.style.background = wknd ? 'var(--weekend)' : '#fff';
 
       if (ev) {
         // Calculer combien de jours l'événement couvre dans CE mois à partir d'aujourd'hui
