@@ -73,21 +73,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* LAYOUT */
 .layout{display:flex;gap:24px;align-items:flex-start}
 
-/* CALENDRIER */
+/* CALENDRIER TABLE */
 .calendar-wrap{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-width:0}
-.calendar-grid{display:grid;grid-template-columns:repeat(4,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
-.month-col{border-right:1px solid var(--border);display:flex;flex-direction:column}
-.month-header{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
-
-.day-row{display:flex;align-items:flex-start;border-bottom:1px solid var(--border);min-height:24px}
-.day-row.weekend{background:var(--weekend)}
-.day-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);width:22px;text-align:right;padding:3px 4px 0;flex-shrink:0;font-weight:500}
-.day-row.weekend .day-num{color:var(--accent);font-weight:700}
-.day-name{font-size:.7rem;color:var(--muted);width:28px;flex-shrink:0;font-weight:400;padding-top:4px}
-
-.day-label{flex:1;font-size:.76rem;font-weight:600;padding:2px 4px;border-radius:2px;line-height:1.25;min-height:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden}
-.day-label .l1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center}
-.day-label .l2{font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;width:100%;text-align:center}
+.cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.cal-table th{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b}
+.cal-table th:last-child{border-right:none}
+.cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
+.td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);width:20px;text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500}
+.td-name{font-size:.7rem;color:var(--muted);width:26px;padding-top:3px;white-space:nowrap}
+.td-label{font-size:.76rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden}
+.td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-label .l2{display:block;font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+tr.weekend td{background:var(--weekend)}
+tr.weekend .td-num{color:var(--accent);font-weight:700}
+td.ev-cell{border-left:none;border-right:1px solid var(--border)}
 
 /* NAV */
 .nav-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
@@ -179,7 +178,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 <div class="layout">
   <!-- CALENDRIER -->
   <div class="calendar-wrap">
-    <div class="calendar-grid" id="calGrid"></div>
+    <table class="cal-table" id="calGrid"></table>
   </div>
 
   <!-- FORMULAIRE ADMIN -->
@@ -369,74 +368,118 @@ function parseLabel(raw) {
 }
 
 function renderCalendar() {
-  const months = getMonths();
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
+  const months  = getMonths();
+  const table   = document.getElementById('calGrid');
+  table.innerHTML = '';
 
   const f = months[0], l = months[3];
   document.getElementById('rangeLabel').textContent =
     `${MONTHS[f.month]} ${f.year} → ${MONTHS[l.month]} ${l.year}`;
 
-  months.forEach(({ year, month }) => {
-    const col = document.createElement('div');
-    col.className = 'month-col';
-
-    const hdr = document.createElement('div');
-    hdr.className = 'month-header';
-    hdr.textContent = `${MONTHS[month]} ${year}`;
-    col.appendChild(hdr);
-
+  // Pré-calcul : pour chaque mois, tableau de jours avec info événement
+  // Structure par mois : [{day, dow, iso, ev}]
+  const monthsData = months.map(({year, month}) => {
     const days = daysInMonth(year, month);
-    const shown = new Set();
-
+    const arr  = [];
     for (let d = 1; d <= days; d++) {
-      const iso  = toIso(year, month, d);
-      const dow  = new Date(year, month, d).getDay();
+      const iso = toIso(year, month, d);
+      const dow = new Date(year, month, d).getDay();
+      arr.push({ day: d, dow, iso, ev: evForDay(iso) });
+    }
+    return { year, month, days: arr };
+  });
+
+  // Ligne d'en-têtes des mois
+  const thead = document.createElement('thead');
+  const hdrRow = document.createElement('tr');
+  months.forEach(({year, month}) => {
+    const th = document.createElement('th');
+    th.colSpan = 3; // num + name + label
+    th.textContent = `${MONTHS[month]} ${year}`;
+    hdrRow.appendChild(th);
+  });
+  thead.appendChild(hdrRow);
+  table.appendChild(thead);
+
+  // Corps : on construit ligne par ligne (index de jour 0..maxDays-1)
+  const maxDays = Math.max(...monthsData.map(m => m.days.length));
+  const tbody   = document.createElement('tbody');
+
+  // Pour chaque mois, on suit quels jours sont "absorbés" par un rowspan
+  // skippedUntil[mIdx] = numéro du jour jusqu'auquel on saute (exclusif)
+  const skippedUntil = monthsData.map(() => 0);
+
+  for (let i = 0; i < maxDays; i++) {
+    const tr = document.createElement('tr');
+    let isWeekendRow = false;
+
+    monthsData.forEach((mData, mIdx) => {
+      if (i >= mData.days.length) {
+        // Mois plus court : cellule vide
+        const td = document.createElement('td'); td.colSpan = 3;
+        tr.appendChild(td);
+        return;
+      }
+
+      const { day, dow, iso, ev } = mData.days[i];
       const wknd = dow === 0 || dow === 6;
-      const ev   = evForDay(iso);
+      if (wknd) isWeekendRow = true;
 
-      const row = document.createElement('div');
-      row.className = 'day-row' + (wknd ? ' weekend' : '');
+      // Cellule numéro
+      const tdNum = document.createElement('td');
+      tdNum.className = 'td-num';
+      tdNum.textContent = day;
+      if (wknd) tdNum.style.color = 'var(--accent)';
+      tr.appendChild(tdNum);
 
-      const numEl = document.createElement('div');
-      numEl.className = 'day-num';
-      numEl.textContent = d;
+      // Cellule nom du jour
+      const tdName = document.createElement('td');
+      tdName.className = 'td-name';
+      tdName.textContent = DAYS[dow];
+      tr.appendChild(tdName);
 
-      const nameEl = document.createElement('div');
-      nameEl.className = 'day-name';
-      nameEl.textContent = DAYS[dow];
+      // Cellule label — avec rowspan si événement multi-jours
+      if (skippedUntil[mIdx] > i) {
+        // Ce jour est couvert par un rowspan précédent, on ne crée pas de td
+        return;
+      }
 
-      const lblEl = document.createElement('div');
-      lblEl.className = 'day-label';
+      const tdLabel = document.createElement('td');
+      tdLabel.className = 'td-label';
 
       if (ev) {
-        // Trouver le premier jour de l'événement dans ce mois
-        const monthStart = toIso(year, month, 1);
-        const evStartInMonth = ev.start > monthStart ? ev.start : monthStart;
-        const firstDay = parseInt(evStartInMonth.split('-')[2]);
+        // Calculer combien de jours l'événement couvre dans CE mois à partir d'aujourd'hui
+        const monthEnd = toIso(mData.year, mData.month, mData.days.length);
+        const evEnd    = ev.end < monthEnd ? ev.end : monthEnd;
+        const spanDays = Math.round((new Date(evEnd) - new Date(iso)) / 86400000) + 1;
 
-        row.style.background = ev.color;
-        lblEl.style.color = ev.textColor || '#fff';
+        if (spanDays > 1) {
+          tdLabel.rowSpan = spanDays;
+          skippedUntil[mIdx] = i + spanDays;
+        }
 
-        if (d === firstDay && !shown.has(ev.id)) {
-          const { l1, l2 } = parseLabel(ev.label);
-          const s1 = document.createElement('span'); s1.className = 'l1'; s1.textContent = l1;
-          lblEl.appendChild(s1);
-          if (l2) {
-            const s2 = document.createElement('span'); s2.className = 'l2'; s2.textContent = l2;
-            lblEl.appendChild(s2);
-          }
-          shown.add(ev.id);
+        tdLabel.style.background  = ev.color;
+        tdLabel.style.color       = ev.textColor || '#fff';
+        tdLabel.style.verticalAlign = 'middle';
+        tdLabel.classList.add('ev-cell');
+
+        const { l1, l2 } = parseLabel(ev.label);
+        const s1 = document.createElement('span'); s1.className = 'l1'; s1.textContent = l1;
+        tdLabel.appendChild(s1);
+        if (l2) {
+          const s2 = document.createElement('span'); s2.className = 'l2'; s2.textContent = l2;
+          tdLabel.appendChild(s2);
         }
       }
 
-      row.appendChild(numEl);
-      row.appendChild(nameEl);
-      row.appendChild(lblEl);
-      col.appendChild(row);
-    }
-    grid.appendChild(col);
-  });
+      tr.appendChild(tdLabel);
+    });
+
+    if (isWeekendRow) tr.className = 'weekend';
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
 }
 
 // ── Ajout / édition / suppression ───────────
