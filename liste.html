@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prévisions Cabas Liassois</title>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCgZjS47NCGWWJScgIyWki0XSubBFmVUdk",
+    authDomain:        "calendrier-cabas-liassoi-be21d.firebaseapp.com",
+    databaseURL:       "https://calendrier-cabas-liassoi-be21d-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "calendrier-cabas-liassoi-be21d",
+    storageBucket:     "calendrier-cabas-liassoi-be21d.firebasestorage.app",
+    messagingSenderId: "427249595179",
+    appId:             "1:427249595179:web:b908f814e6e9fd88d98b6e"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const eventsRef = ref(db, 'events');
+    window._fb = { onValue, eventsRef };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('firebase-ready'));
+  } catch(e) {
+    document.dispatchEvent(new Event('firebase-failed'));
+  }
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f5f4f0;--surface:#fff;--text:#1a1a1a;
+  --muted:#666;--border:#e0e0e0;--accent:#c0392b;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:32px 40px;
+}
+
+h1{
+  font-size:1.6rem;
+  font-weight:700;
+  margin-bottom:28px;
+  color:var(--text);
+  letter-spacing:-.02em;
+}
+
+.list{
+  list-style:none;
+  max-width:600px;
+}
+
+.list-item{
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
+  font-size:1rem;
+  line-height:1.4;
+}
+
+.list-item:last-child{border-bottom:none}
+
+.item-date{
+  font-size:.92rem;
+  color:var(--muted);
+  min-width:170px;
+  flex-shrink:0;
+  font-weight:400;
+}
+
+.item-label{
+  font-weight:600;
+  color:var(--text);
+}
+
+.item-sub{
+  font-weight:400;
+  color:var(--muted);
+  font-size:.88rem;
+}
+
+.loading{
+  color:var(--muted);
+  font-size:.9rem;
+  font-style:italic;
+  padding:16px 0;
+}
+
+.version{
+  position:fixed;
+  bottom:6px;
+  right:10px;
+  font-size:.62rem;
+  color:#333;
+  font-family:'DM Sans',monospace;
+  pointer-events:none;
+}
+</style>
+</head>
+<body>
+
+<h1>Prévisions Cabas Liassois</h1>
+<ul class="list" id="listContainer">
+  <li class="loading">Chargement…</li>
+</ul>
+
+<div class="version">liste-v1 — 14/03/2025</div>
+
+<script>
+const DAYS_FR   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const MONTHS_FR = ['janvier','février','mars','avril','mai','juin',
+                   'juillet','août','septembre','octobre','novembre','décembre'];
+
+function fmtDateLong(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dow = new Date(y, m-1, d).getDay();
+  return `${DAYS_FR[dow]} ${d} ${MONTHS_FR[m-1]}`;
+}
+
+function parseLabel(raw) {
+  const p = raw.split('+').map(s => s.trim()).filter(Boolean);
+  return { l1: p[0] || '', l2: p[1] || '' };
+}
+
+// Extrait le numéro depuis "Commande 70" ou "Distribution 70" → "70"
+function extractNum(label) {
+  const m = label.match(/\d+/);
+  return m ? m[0] : null;
+}
+
+function renderList(events) {
+  const container = document.getElementById('listContainer');
+
+  // Séparer commandes et distributions
+  const commandes     = events.filter(ev => ev.label.trim().toLowerCase().startsWith('commande'));
+  const distributions = events.filter(ev => ev.label.trim().toLowerCase().startsWith('distribution'));
+
+  // Index distributions par numéro
+  const distByNum = {};
+  distributions.forEach(ev => {
+    const num = extractNum(ev.label);
+    if (num) distByNum[num] = ev;
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Pour chaque commande, trouver la distribution associée
+  const lignes = commandes.map(cmd => {
+    const num  = extractNum(cmd.label);
+    const dist = num ? distByNum[num] : null;
+    return { cmd, dist, num };
+  });
+
+  // Filtrer : ne garder que celles dont la distribution est à venir (ou pas encore définie)
+  const visibles = lignes
+    .filter(({ dist }) => !dist || dist.start >= today)
+    .sort((a, b) => {
+      // Trier par date de distribution, "à définir" en dernier
+      if (!a.dist && !b.dist) return 0;
+      if (!a.dist) return 1;
+      if (!b.dist) return -1;
+      return a.dist.start.localeCompare(b.dist.start);
+    });
+
+  if (!visibles.length) {
+    container.innerHTML = '<li class="loading">Aucun événement à venir.</li>';
+    return;
+  }
+
+  container.innerHTML = '';
+  visibles.forEach(({ cmd, dist }) => {
+    const { l1, l2 } = parseLabel(cmd.label);
+    const li = document.createElement('li');
+    li.className = 'list-item';
+
+    const dateEl = document.createElement('span');
+    dateEl.className = 'item-date';
+    dateEl.textContent = dist ? fmtDateLong(dist.start) : 'date à définir';
+    if (!dist) dateEl.style.fontStyle = 'italic';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'item-label';
+    labelEl.textContent = l1;
+
+    li.appendChild(dateEl);
+    li.appendChild(labelEl);
+
+    if (l2) {
+      const subEl = document.createElement('span');
+      subEl.className = 'item-sub';
+      subEl.textContent = ' — ' + l2;
+      li.appendChild(subEl);
+    }
+
+    container.appendChild(li);
+  });
+}
+
+function loadLocal() {
+  const events = JSON.parse(localStorage.getItem('calEvents') || '[]');
+  renderList(events);
+}
+
+document.addEventListener('firebase-ready', () => {
+  const { onValue, eventsRef } = window._fb;
+  onValue(eventsRef, snap => {
+    const d = snap.val();
+    renderList(d ? Object.values(d) : []);
+  }, () => loadLocal());
+});
+
+document.addEventListener('firebase-failed', () => loadLocal());
+setTimeout(() => {
+  if (!window._fbReady) loadLocal();
+}, 1500);
+</script>
+</body>
+</html>

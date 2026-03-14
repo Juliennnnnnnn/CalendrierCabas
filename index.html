@@ -126,8 +126,8 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 .ev-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0;margin-top:2px}
 .ev-info{flex:1;min-width:0}
 .ev-info strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev-info .sub{color:#888;font-size:.67rem;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev-info .dates{color:var(--muted);font-size:.68rem}
+.ev-info .sub{display:block;color:#888;font-size:.67rem;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-info .dates{display:block;color:var(--muted);font-size:.68rem}
 .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.9rem;padding:2px 4px;border-radius:2px;flex-shrink:0}
 .del-btn:hover{background:#fee;color:var(--accent)}
 .btn.edit{background:var(--green);margin-top:4px}
@@ -226,7 +226,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version" style="color:#333">v12 — 14/03/2025</div>
+<div class="version">v14 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -606,7 +606,12 @@ function renderEventList() {
     const item = document.createElement('div'); item.className = 'ev-item';
     const dot  = document.createElement('div'); dot.className = 'ev-dot'; dot.style.background = ev.color;
     const info = document.createElement('div'); info.className = 'ev-info';
-    info.innerHTML = `<strong>${l1}</strong>${l2?`<span class="sub">${l2}</span>`:''}<span class="dates">${fmtDate(ev.start)} → ${fmtDate(ev.end)}</span>`;
+    const datesHtml = `<span class="dates">${fmtDate(ev.start)} → ${fmtDate(ev.end)}</span>`;
+    if (l2) {
+      info.innerHTML = `<strong>${l1}</strong><span class="sub">${l2}</span>${datesHtml}`;
+    } else {
+      info.innerHTML = `<strong>${l1}</strong>${datesHtml}`;
+    }
     const edt = document.createElement('button'); edt.className = 'ev-edit-btn'; edt.textContent = '✏️';
     edt.title = 'Modifier'; edt.onclick = () => editEvent(ev.id);
     const del = document.createElement('button'); del.className = 'del-btn'; del.textContent = '✕';
