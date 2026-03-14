@@ -107,7 +107,7 @@ h1{
   bottom:6px;
   right:10px;
   font-size:.62rem;
-  color:#333;
+  color:#bbb;
   font-family:'DM Sans',monospace;
   pointer-events:none;
 }
@@ -120,7 +120,7 @@ h1{
   <li class="loading">Chargement…</li>
 </ul>
 
-<div class="version">liste-v1 — 14/03/2025</div>
+<div class="version">liste-v2 — 14/03/2025</div>
 
 <script>
 const DAYS_FR   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
@@ -138,7 +138,12 @@ function parseLabel(raw) {
   return { l1: p[0] || '', l2: p[1] || '' };
 }
 
-// Extrait le numéro depuis "Commande 70" ou "Distribution 70" → "70"
+// Extrait tous les numéros d'un libellé : "Distribution commandes 72 / 73" → ["72","73"]
+function extractNums(label) {
+  return [...label.matchAll(/\d+/g)].map(m => m[0]);
+}
+
+// Extrait le premier numéro uniquement
 function extractNum(label) {
   const m = label.match(/\d+/);
   return m ? m[0] : null;
@@ -146,53 +151,66 @@ function extractNum(label) {
 
 function renderList(events) {
   const container = document.getElementById('listContainer');
+  const today = new Date().toISOString().split('T')[0];
 
-  // Séparer commandes et distributions
   const commandes     = events.filter(ev => ev.label.trim().toLowerCase().startsWith('commande'));
   const distributions = events.filter(ev => ev.label.trim().toLowerCase().startsWith('distribution'));
 
-  // Index distributions par numéro
-  const distByNum = {};
-  distributions.forEach(ev => {
+  // Index commandes par numéro → { "70": ev, ... }
+  const cmdByNum = {};
+  commandes.forEach(ev => {
     const num = extractNum(ev.label);
-    if (num) distByNum[num] = ev;
+    if (num) cmdByNum[num] = ev;
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const lignes = [];
 
-  // Pour chaque commande, trouver la distribution associée
-  const lignes = commandes.map(cmd => {
-    const num  = extractNum(cmd.label);
-    const dist = num ? distByNum[num] : null;
-    return { cmd, dist, num };
-  });
+  distributions.forEach(dist => {
+    // Ignorer distributions passées
+    if (dist.start < today) return;
 
-  // Filtrer : ne garder que celles dont la distribution est à venir (ou pas encore définie)
-  const visibles = lignes
-    .filter(({ dist }) => !dist || dist.start >= today)
-    .sort((a, b) => {
-      // Trier par date de distribution, "à définir" en dernier
-      if (!a.dist && !b.dist) return 0;
-      if (!a.dist) return 1;
-      if (!b.dist) return -1;
-      return a.dist.start.localeCompare(b.dist.start);
+    const nums = extractNums(dist.label);
+
+    if (nums.length === 0) {
+      // Distribution sans numéro → afficher avec libellé de la distri
+      const { l1, l2 } = parseLabel(dist.label);
+      lignes.push({ date: dist.start, l1, l2 });
+      return;
+    }
+
+    // Pour chaque numéro trouvé dans la distribution
+    nums.forEach(num => {
+      const cmd = cmdByNum[num];
+      if (cmd) {
+        // Cas principal : commande + distri → date distri + libellé commande
+        const { l1, l2 } = parseLabel(cmd.label);
+        lignes.push({ date: dist.start, l1, l2 });
+      } else {
+        // Distribution sans commande associée → libellé de la distri
+        const { l1, l2 } = parseLabel(dist.label);
+        lignes.push({ date: dist.start, l1, l2 });
+      }
     });
+  });
 
-  if (!visibles.length) {
+  // Commandes sans distribution → on n'affiche pas (comme demandé)
+
+  // Trier par date
+  lignes.sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!lignes.length) {
     container.innerHTML = '<li class="loading">Aucun événement à venir.</li>';
     return;
   }
 
   container.innerHTML = '';
-  visibles.forEach(({ cmd, dist }) => {
-    const { l1, l2 } = parseLabel(cmd.label);
+  lignes.forEach(({ date, l1, l2 }) => {
     const li = document.createElement('li');
     li.className = 'list-item';
 
     const dateEl = document.createElement('span');
     dateEl.className = 'item-date';
-    dateEl.textContent = dist ? fmtDateLong(dist.start) : 'date à définir';
-    if (!dist) dateEl.style.fontStyle = 'italic';
+    dateEl.textContent = fmtDateLong(date);
 
     const labelEl = document.createElement('span');
     labelEl.className = 'item-label';

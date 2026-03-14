@@ -84,9 +84,9 @@ col.col-lbl{width:auto}
 .cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
 .td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500;border-right:none!important}
 .td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 4px;white-space:nowrap;border-right:none!important;border-left:none!important}
-.td-label{font-size:.76rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden;border-left:none!important}
+.td-label{font-size:.88rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden;border-left:none!important}
 .td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.td-label .l2{display:block;font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.td-label .l2{display:block;font-weight:400;font-size:.78rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 tr.weekend td{background:var(--weekend)}
 tr.weekend .td-num{color:var(--accent);font-weight:700}
 td.ev-cell{border-left:none!important}
@@ -184,10 +184,10 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
   <div class="calendar-wrap">
     <table class="cal-table" id="calGrid">
       <colgroup>
-        <col class="col-num"><col class="col-day"><col class="col-lbl">
-        <col class="col-num"><col class="col-day"><col class="col-lbl">
-        <col class="col-num"><col class="col-day"><col class="col-lbl">
-        <col class="col-num"><col class="col-day"><col class="col-lbl">
+        <col class="col-num"><col class="col-lbl">
+        <col class="col-num"><col class="col-lbl">
+        <col class="col-num"><col class="col-lbl">
+        <col class="col-num"><col class="col-lbl">
       </colgroup>
     </table>
   </div>
@@ -226,7 +226,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version">v14 — 14/03/2025</div>
+<div class="version">v16 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -406,12 +406,9 @@ function renderCalendar() {
   const hdrRow = document.createElement('tr');
   months.forEach(({year, month}) => {
     const thNum = document.createElement('th');
-    thNum.style.cssText = 'width:18px;max-width:18px;background:var(--navy);color:#fff;padding:8px 0;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:none';
+    thNum.colSpan = 2;
+    thNum.style.cssText = 'width:46px;max-width:46px;background:var(--navy);color:#fff;padding:8px 0;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:none';
     hdrRow.appendChild(thNum);
-
-    const thDay = document.createElement('th');
-    thDay.style.cssText = 'width:26px;max-width:26px;background:var(--navy);color:#fff;padding:8px 0;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:none';
-    hdrRow.appendChild(thDay);
 
     const thLbl = document.createElement('th');
     thLbl.style.cssText = 'background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b';
@@ -445,22 +442,31 @@ function renderCalendar() {
       const wknd = dow === 0 || dow === 6;
       if (wknd) isWeekendRow = true;
 
-      // Cellule numéro
+      // Cellule numéro + jour fusionnés
       const tdNum = document.createElement('td');
       tdNum.className = 'td-num';
-      tdNum.style.width = '18px';
+      tdNum.colSpan = 2;
+      tdNum.style.width = '46px';
       tdNum.style.background = wknd ? 'var(--weekend)' : '#fff';
+      tdNum.style.whiteSpace = 'nowrap';
+      tdNum.style.paddingRight = '4px';
       if (wknd) tdNum.style.color = 'var(--accent)';
-      tdNum.textContent = day;
-      tr.appendChild(tdNum);
 
-      // Cellule nom du jour
-      const tdName = document.createElement('td');
-      tdName.className = 'td-name';
-      tdName.style.width = '26px';
-      tdName.style.background = wknd ? 'var(--weekend)' : '#fff';
-      tdName.textContent = ' ' + DAYS[dow];
-      tr.appendChild(tdName);
+      const numSpan = document.createElement('span');
+      numSpan.style.fontFamily = "'DM Mono', monospace";
+      numSpan.style.fontSize = '.72rem';
+      numSpan.style.fontWeight = '500';
+      numSpan.textContent = day;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.style.fontSize = '.7rem';
+      nameSpan.style.marginLeft = '4px';
+      nameSpan.style.color = wknd ? 'inherit' : 'var(--muted)';
+      nameSpan.textContent = DAYS[dow];
+
+      tdNum.appendChild(numSpan);
+      tdNum.appendChild(nameSpan);
+      tr.appendChild(tdNum);
 
       // Cellule label — avec rowspan si événement multi-jours
       if (skippedUntil[mIdx] > i) {
