@@ -79,9 +79,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cal-table th{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b}
 .cal-table th:last-child{border-right:none}
 .cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
-.td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);width:20px;text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500}
-.td-name{font-size:.7rem;color:var(--muted);width:26px;padding-top:3px;white-space:nowrap}
-.td-label{font-size:.76rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden}
+.td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500;border-right:none!important}
+.td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 2px;white-space:nowrap;border-right:none!important}
+.td-label{font-size:.76rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden;border-left:none!important}
 .td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .td-label .l2{display:block;font-weight:400;font-size:.68rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 tr.weekend td{background:var(--weekend)}
@@ -179,7 +179,14 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 <div class="layout">
   <!-- CALENDRIER -->
   <div class="calendar-wrap">
-    <table class="cal-table" id="calGrid"></table>
+    <table class="cal-table" id="calGrid">
+      <colgroup>
+        <col style="width:18px"><col style="width:26px"><col>
+        <col style="width:18px"><col style="width:26px"><col>
+        <col style="width:18px"><col style="width:26px"><col>
+        <col style="width:18px"><col style="width:26px"><col>
+      </colgroup>
+    </table>
   </div>
 
   <!-- FORMULAIRE ADMIN -->
@@ -216,7 +223,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version">v5 — 14/03/2025</div>
+<div class="version">v6 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
