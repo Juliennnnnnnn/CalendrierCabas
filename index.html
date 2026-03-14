@@ -226,7 +226,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
 
 </div>
 
-<div class="version">v7 — 14/03/2025</div>
+<div class="version">v8 — 14/03/2025</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -441,6 +441,7 @@ function renderCalendar() {
       // Cellule numéro
       const tdNum = document.createElement('td');
       tdNum.className = 'td-num';
+      tdNum.style.width = '18px';
       tdNum.textContent = day;
       if (wknd) tdNum.style.color = 'var(--accent)';
       tr.appendChild(tdNum);
@@ -448,6 +449,7 @@ function renderCalendar() {
       // Cellule nom du jour
       const tdName = document.createElement('td');
       tdName.className = 'td-name';
+      tdName.style.width = '26px';
       tdName.textContent = DAYS[dow];
       tr.appendChild(tdName);
 
