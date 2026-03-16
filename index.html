@@ -171,11 +171,11 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
     <!-- ONGLET LIBRE -->
     <div class="tab-content active" id="contentLibre">
       <div class="field"><label>Libellé</label>
-        <input type="text" id="lLabel" placeholder="Mon événement + détail" autocomplete="off">
+        <input type="text" id="lLabel" placeholder="Mon événement + détail" autocomplete="off" data-lpignore="true" data-form-type="other">
         <p class="hint">Séparez par <strong>+</strong> pour 2 lignes</p>
       </div>
-      <div class="field"><label>Date début</label><input type="date" id="lStart" onchange="onLibreStartChange()" autocomplete="off"></div>
-      <div class="field"><label>Date fin</label><input type="date" id="lEnd" autocomplete="off"></div>
+      <div class="field"><label>Date début</label><input type="date" id="lStart" onchange="onLibreStartChange()" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
+      <div class="field"><label>Date fin</label><input type="date" id="lEnd" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
       <div class="field">
         <label>Couleur de fond</label>
         <div class="color-row" id="lSwatches"></div>
@@ -191,20 +191,20 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
 
     <!-- ONGLET COMMANDE -->
     <div class="tab-content" id="contentCmd">
-      <div class="field"><label>N° de commande</label><input type="number" id="cNum" min="1" placeholder="Ex : 72" autocomplete="off"></div>
+      <div class="field"><label>N° de commande</label><input type="number" id="cNum" min="1" placeholder="Ex : 72" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
       <div class="field"><label>Libellé commande</label>
-        <input type="text" id="cLabel" placeholder="Fromage Savoie + détail" autocomplete="off">
+        <input type="text" id="cLabel" placeholder="Fromage Savoie + détail" autocomplete="off" data-lpignore="true" data-form-type="other">
         <p class="hint">Séparez par <strong>+</strong> pour 2 lignes</p>
       </div>
-      <div class="field"><label>Début commande</label><input type="date" id="cStart" onchange="onCmdStartChange()" autocomplete="off"></div>
-      <div class="field"><label>Fin commande</label><input type="date" id="cEnd" autocomplete="off"></div>
+      <div class="field"><label>Début commande</label><input type="date" id="cStart" onchange="onCmdStartChange()" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
+      <div class="field"><label>Fin commande</label><input type="date" id="cEnd" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
       <div class="field">
         <label>Couleur commande</label>
         <div class="color-row" id="cSwatches"></div>
         <div class="custom-color"><input type="color" id="cColorPicker" value="#27ae60" oninput="syncDistriColor()"><span style="font-size:.7rem;color:var(--muted)">Libre</span></div>
       </div>
       <hr class="sep">
-      <div class="field"><label>Date distribution</label><input type="date" id="dDate" autocomplete="off"></div>
+      <div class="field"><label>Date distribution</label><input type="date" id="dDate" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
       <div class="field">
         <label>Couleur distribution <span style="font-weight:400;font-style:italic">(défaut = commande)</span></label>
         <div class="color-row" id="dSwatches"></div>
@@ -226,7 +226,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div>
 </div>
 
-<div class="version">v27 — 16/03/2026</div>
+<div class="version">v28 — 16/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -693,10 +693,13 @@ function makeEvItem(color,title,sub,dates,onEdit,onDel){
   const dot=document.createElement('div');dot.className='ev-dot';dot.style.background=color||'#ccc';
   const info=document.createElement('div');info.className='ev-info';
   info.innerHTML=`<strong>${title}</strong>${sub?`<span class="sub">${sub}</span>`:''}<span class="dates">${dates}</span>`;
-  const acts=document.createElement('div');acts.className='ev-actions';
-  const eBtn=document.createElement('button');eBtn.className='edit-btn';eBtn.textContent='✏️';eBtn.onclick=onEdit;acts.appendChild(eBtn);
-  if(onDel){const dBtn=document.createElement('button');dBtn.className='del-btn';dBtn.textContent='✕';dBtn.onclick=onDel;acts.appendChild(dBtn);}
-  item.appendChild(dot);item.appendChild(info);item.appendChild(acts);
+  item.appendChild(dot);item.appendChild(info);
+  if(onEdit||onDel){
+    const acts=document.createElement('div');acts.className='ev-actions';
+    if(onEdit){const eBtn=document.createElement('button');eBtn.className='edit-btn';eBtn.textContent='✏️';eBtn.onclick=onEdit;acts.appendChild(eBtn);}
+    if(onDel){const dBtn=document.createElement('button');dBtn.className='del-btn';dBtn.textContent='✕';dBtn.onclick=onDel;acts.appendChild(dBtn);}
+    item.appendChild(acts);
+  }
   return item;
 }
 
