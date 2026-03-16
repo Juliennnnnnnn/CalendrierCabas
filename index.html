@@ -120,13 +120,6 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
 .edit-btn{color:#2980b9}.edit-btn:hover{background:#ebf5fb}
 .empty-msg{font-size:.72rem;color:#bbb;font-style:italic}
 
-/* OUTIL DÉCALAGE */
-.shift-tool{background:#f0f4f8;border-radius:6px;padding:10px;margin-top:10px}
-.shift-tool p{font-size:.72rem;color:var(--muted);margin-bottom:6px}
-.shift-row{display:flex;gap:6px;align-items:center}
-.shift-row input{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none}
-.shift-row button{flex:1;padding:6px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:.76rem;font-weight:600;cursor:pointer}
-
 .hidden{display:none!important}
 .version{position:fixed;bottom:6px;right:10px;font-size:.62rem;color:#bbb;font-family:'DM Mono',monospace;pointer-events:none}
 </style>
@@ -178,11 +171,11 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
     <!-- ONGLET LIBRE -->
     <div class="tab-content active" id="contentLibre">
       <div class="field"><label>Libellé</label>
-        <input type="text" id="lLabel" placeholder="Mon événement + détail">
+        <input type="text" id="lLabel" placeholder="Mon événement + détail" autocomplete="off">
         <p class="hint">Séparez par <strong>+</strong> pour 2 lignes</p>
       </div>
-      <div class="field"><label>Date début</label><input type="date" id="lStart" onchange="onLibreStartChange()"></div>
-      <div class="field"><label>Date fin</label><input type="date" id="lEnd"></div>
+      <div class="field"><label>Date début</label><input type="date" id="lStart" onchange="onLibreStartChange()" autocomplete="off"></div>
+      <div class="field"><label>Date fin</label><input type="date" id="lEnd" autocomplete="off"></div>
       <div class="field">
         <label>Couleur de fond</label>
         <div class="color-row" id="lSwatches"></div>
@@ -198,20 +191,20 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
 
     <!-- ONGLET COMMANDE -->
     <div class="tab-content" id="contentCmd">
-      <div class="field"><label>N° de commande</label><input type="number" id="cNum" min="1" placeholder="Ex : 72"></div>
+      <div class="field"><label>N° de commande</label><input type="number" id="cNum" min="1" placeholder="Ex : 72" autocomplete="off"></div>
       <div class="field"><label>Libellé commande</label>
-        <input type="text" id="cLabel" placeholder="Fromage Savoie + détail">
+        <input type="text" id="cLabel" placeholder="Fromage Savoie + détail" autocomplete="off">
         <p class="hint">Séparez par <strong>+</strong> pour 2 lignes</p>
       </div>
-      <div class="field"><label>Début commande</label><input type="date" id="cStart" onchange="onCmdStartChange()"></div>
-      <div class="field"><label>Fin commande</label><input type="date" id="cEnd"></div>
+      <div class="field"><label>Début commande</label><input type="date" id="cStart" onchange="onCmdStartChange()" autocomplete="off"></div>
+      <div class="field"><label>Fin commande</label><input type="date" id="cEnd" autocomplete="off"></div>
       <div class="field">
         <label>Couleur commande</label>
         <div class="color-row" id="cSwatches"></div>
         <div class="custom-color"><input type="color" id="cColorPicker" value="#27ae60" oninput="syncDistriColor()"><span style="font-size:.7rem;color:var(--muted)">Libre</span></div>
       </div>
       <hr class="sep">
-      <div class="field"><label>Date distribution</label><input type="date" id="dDate"></div>
+      <div class="field"><label>Date distribution</label><input type="date" id="dDate" autocomplete="off"></div>
       <div class="field">
         <label>Couleur distribution <span style="font-weight:400;font-style:italic">(défaut = commande)</span></label>
         <div class="color-row" id="dSwatches"></div>
@@ -223,15 +216,6 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
       </div>
       <button class="btn" id="btnCmd" onclick="saveCmd()">＋ Ajouter</button>
       <button class="btn danger hidden" id="btnCmdCancel" onclick="cancelEdit()">✕ Annuler</button>
-
-      <!-- OUTIL DÉCALAGE -->
-      <div class="shift-tool">
-        <p>Insérer une commande et décaler les numéros suivants :</p>
-        <div class="shift-row">
-          <input type="number" id="shiftFrom" min="1" placeholder="À partir du n°">
-          <button onclick="shiftNumbers()">Décaler +1</button>
-        </div>
-      </div>
     </div>
 
     <!-- LISTE EVENTS -->
@@ -242,7 +226,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div>
 </div>
 
-<div class="version">v22 — 16/03/2026</div>
+<div class="version">v27 — 16/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -402,6 +386,22 @@ function saveCmd() {
   const dDate = document.getElementById('dDate').value;
 
   if (!num) { alert('Saisissez un numéro de commande.'); return; }
+  if (!label && !dDate) { alert('Saisissez au moins un libellé ou une date de distribution.'); return; }
+
+  // Contrôle doublon — sauf si on est en mode édition du même numéro
+  if (editingCmdNum === null) {
+    const exists = events.some(e => e.cmdNum === num && (e.type==='commande'||e.type==='distribution'));
+    if (exists) {
+      const ok = confirm(
+        `Le numéro ${num} est déjà utilisé.\n\n` +
+        `• Pour modifier l'existant : annulez et cliquez ✏️ dans la liste.\n` +
+        `• Pour insérer un nouveau ${num} : cliquez OK pour décaler tous les numéros ≥ ${num} de +1.\n\n` +
+        `Décaler les numéros ≥ ${num} ?`
+      );
+      if (!ok) return; // refus → on ne crée rien
+      events.forEach(e => { if ((e.type==='commande'||e.type==='distribution') && e.cmdNum>=num) e.cmdNum++; });
+    }
+  }
 
   // Supprimer anciens evt de ce numéro si édition
   if (editingCmdNum!==null) {
@@ -409,24 +409,12 @@ function saveCmd() {
     editingCmdNum=null;
   }
 
-  // Créer commande si données suffisantes
   if (label && cStart && cEnd) {
-    events.push({
-      id: Date.now(), type:'commande', cmdNum:num,
-      label, start:cStart, end:cEnd,
-      color:cColor, textColor:cTxtColor
-    });
+    events.push({id:Date.now(), type:'commande', cmdNum:num, label, start:cStart, end:cEnd, color:cColor, textColor:cTxtColor});
   }
-  // Créer distribution si date fournie
   if (dDate) {
-    events.push({
-      id: Date.now()+1, type:'distribution', cmdNum:num,
-      label:'', start:dDate, end:dDate,
-      color:dColor, textColor:cTxtColor
-    });
+    events.push({id:Date.now()+1, type:'distribution', cmdNum:num, label:label||'', start:dDate, end:dDate, color:dColor, textColor:cTxtColor});
   }
-
-  if (!label&&!dDate) { alert('Saisissez au moins un libellé ou une date de distribution.'); return; }
 
   saveFb(); resetForms(); renderAll();
 }
@@ -511,16 +499,6 @@ function deleteCmdGroup(num) {
   if(!fbReady) saveLocal(); renderAll();
 }
 
-// ── Décalage numéros ──────────────────────────
-function shiftNumbers() {
-  const from=parseInt(document.getElementById('shiftFrom').value);
-  if (!from||from<1) { alert('Saisissez un numéro valide.'); return; }
-  if (!confirm(`Décaler +1 tous les numéros >= ${from} ?`)) return;
-  events.forEach(e => { if ((e.type==='commande'||e.type==='distribution') && e.cmdNum>=from) e.cmdNum++; });
-  saveFb(); renderAll();
-  document.getElementById('shiftFrom').value='';
-}
-
 // ── Calendrier ────────────────────────────────
 function getNbMonths() { return window.innerWidth<700?2:4; }
 function getMonths() {
@@ -563,10 +541,21 @@ function getDisplayLabel(ev) {
   }
   if (ev.type==='commande') {
     const p=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
-    return {l1:`Commande ${ev.cmdNum}${p[0]?' - '+p[0]:''}`, l2:p[1]||''};
+    return {l1:`Commande ${ev.cmdNum}`, l2:p[0]||''};
   }
   if (ev.type==='distribution_group') {
-    return {l1:'Distribution '+ev.nums.join(' / '), l2:''};
+    // Chercher un libellé dans les commandes liées, sinon dans le label stocké
+    const l2parts = ev.nums.map(num => {
+      const cmd = events.find(e => e.type==='commande' && e.cmdNum===num);
+      if (cmd && cmd.label) {
+        const p = cmd.label.split('+').map(s=>s.trim()).filter(Boolean);
+        return p[0]||'';
+      }
+      // Pas de commande → utiliser le label prévu stocké dans la distri
+      const dist = events.find(e => e.type==='distribution' && e.cmdNum===num);
+      return (dist && dist.label) ? dist.label.split('+')[0].trim() : '';
+    }).filter(Boolean);
+    return {l1:'Distribution '+ev.nums.join(' / '), l2: l2parts.length===1 ? l2parts[0] : ''};
   }
   return {l1:'',l2:''};
 }
@@ -666,19 +655,22 @@ function renderEventList() {
 
     if(cmd){
       const p=(cmd.label||'').split('+').map(s=>s.trim()).filter(Boolean);
-      const item=makeEvItem(cmd.color,`Commande ${num}${p[0]?' - '+p[0]:''}`,p[1]||'',`${fmtDate(cmd.start)} → ${fmtDate(cmd.end)}`,()=>editCmdGroup(num),null);
+      const item=makeEvItem(cmd.color,`Commande ${num}`,p[0]||'',`${fmtDate(cmd.start)} → ${fmtDate(cmd.end)}`,null,null);
       group.appendChild(item);
     }
     if(dist){
-      const item=makeEvItem(dist.color,`Distribution ${num}`,'',fmtDate(dist.start),()=>editCmdGroup(num),()=>deleteCmdGroup(num));
+      const item=makeEvItem(dist.color,`Distribution ${num}`,'',fmtDate(dist.start),null,null);
       group.appendChild(item);
     }
     if(!cmd&&!dist) return;
-    // Bouton supprimer groupe
-    const delGrp=document.createElement('button');delGrp.className='btn danger';delGrp.style.cssText='margin-top:2px;padding:4px;font-size:.7rem';
-    delGrp.textContent=`✕ Supprimer commande ${num} + distribution`;
-    delGrp.onclick=()=>deleteCmdGroup(num);
-    group.appendChild(delGrp);
+    // Boutons groupe
+    const grpBtns=document.createElement('div');grpBtns.style.cssText='display:flex;gap:4px;margin-top:4px';
+    const editGrp=document.createElement('button');editGrp.className='btn';editGrp.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1';
+    editGrp.textContent=`✏️ Modifier n° ${num}`;editGrp.onclick=()=>editCmdGroup(num);
+    const delGrp=document.createElement('button');delGrp.className='btn danger';delGrp.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1';
+    delGrp.textContent=`✕ Supprimer`;delGrp.onclick=()=>deleteCmdGroup(num);
+    grpBtns.appendChild(editGrp);grpBtns.appendChild(delGrp);
+    group.appendChild(grpBtns);
     container.appendChild(group);
   });
 
