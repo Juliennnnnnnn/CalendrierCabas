@@ -72,9 +72,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .td-label .l2{display:block;font-weight:400;font-size:.78rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 
-/* PANNEAU ADMIN */
+/* PANNEAU ADMIN — form + liste côte à côte */
+.admin-wrap{display:flex;gap:12px;align-items:flex-start;flex-shrink:0}
+.admin-wrap.hidden{display:none}
 .side-panel{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:16px;width:310px;flex-shrink:0}
-.side-panel.hidden{display:none}
+.list-panel{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:16px;width:250px;flex-shrink:0;max-height:calc(100vh - 120px);overflow-y:auto}
+.list-panel h3{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;position:sticky;top:0;background:var(--surface);padding-bottom:4px;z-index:1}
+.past-section{margin-top:12px;border-top:2px dashed var(--border);padding-top:8px}
+.past-title{font-size:.68rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
 
 /* ONGLETS */
 .tabs{display:flex;gap:4px;margin-bottom:14px}
@@ -160,7 +165,8 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div>
 
   <!-- PANNEAU ADMIN -->
-  <div class="side-panel hidden" id="formPanel">
+  <div class="admin-wrap hidden" id="adminWrap">
+    <div class="side-panel" id="formPanel">
 
     <!-- ONGLETS -->
     <div class="tabs">
@@ -217,16 +223,18 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
       <button class="btn" id="btnCmd" onclick="saveCmd()">＋ Ajouter</button>
       <button class="btn danger hidden" id="btnCmdCancel" onclick="cancelEdit()">✕ Annuler</button>
     </div>
+    </div><!-- /side-panel -->
 
     <!-- LISTE EVENTS -->
-    <div class="events-list">
+    <div class="list-panel" id="listPanel">
       <h3>Événements (<span id="evCount">0</span>)</h3>
       <div id="evList"><p class="empty-msg">Aucun événement</p></div>
     </div>
-  </div>
+
+  </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v28 — 16/03/2026</div>
+<div class="version">v30 — 16/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -289,7 +297,7 @@ function doLogout() {
 }
 function applyMode() {
   document.getElementById('adminBar').classList.toggle('hidden', !isAdmin);
-  document.getElementById('formPanel').classList.toggle('hidden', !isAdmin);
+  document.getElementById('adminWrap').classList.toggle('hidden', !isAdmin);
   renderAll();
 }
 
@@ -503,6 +511,7 @@ function deleteCmdGroup(num) {
 function getNbMonths() { return window.innerWidth<700?2:4; }
 function getMonths() {
   const nb=getNbMonths(), now=new Date();
+  // startOffset=0 → mois courant en premier
   const base=new Date(now.getFullYear(),now.getMonth()+startOffset,1);
   return Array.from({length:nb},(_,i)=>{const d=new Date(base.getFullYear(),base.getMonth()+i,1);return{year:d.getFullYear(),month:d.getMonth()};});
 }
@@ -635,56 +644,88 @@ function renderCalendar() {
 }
 
 // ── Liste admin ───────────────────────────────
+function getRefDate(num) {
+  const dist=events.find(e=>e.type==='distribution'&&e.cmdNum===num);
+  if (dist) return dist.start;
+  const cmd=events.find(e=>e.type==='commande'&&e.cmdNum===num);
+  if (cmd) return cmd.start;
+  return '9999';
+}
+
+function isGroupPast(num, today) {
+  // Passé uniquement si la distribution existe ET est passée
+  const dist=events.find(e=>e.type==='distribution'&&e.cmdNum===num);
+  return dist ? dist.start < today : false;
+}
+
 function renderEventList() {
   const container=document.getElementById('evList');
   document.getElementById('evCount').textContent=events.length;
   if(!events.length){container.innerHTML='<p class="empty-msg">Aucun événement</p>';return;}
   container.innerHTML='';
 
-  // Grouper : commandes+distri par num, libres séparément
-  const cmdNums=[...new Set(events.filter(e=>e.type==='commande'||e.type==='distribution').map(e=>e.cmdNum))].sort((a,b)=>a-b);
-  const libres=events.filter(e=>!e.type||e.type==='libre').sort((a,b)=>a.start.localeCompare(b.start));
+  const today=new Date().toISOString().split('T')[0];
 
-  // Commandes
-  cmdNums.forEach(num=>{
+  // Numéros de commandes triés par date de référence
+  const cmdNums=[...new Set(events.filter(e=>e.type==='commande'||e.type==='distribution').map(e=>e.cmdNum))];
+  cmdNums.sort((a,b)=>getRefDate(a).localeCompare(getRefDate(b)));
+
+  const futureNums=cmdNums.filter(num=>!isGroupPast(num, today));
+  const pastNums=cmdNums.filter(num=>isGroupPast(num, today));
+
+  // Libres
+  const libres=events.filter(e=>!e.type||e.type==='libre').sort((a,b)=>a.start.localeCompare(b.start));
+  const futureLibres=libres.filter(e=>e.end>=today);
+  const pastLibres=libres.filter(e=>e.end<today);
+
+  function renderGroup(num){
     const cmd=events.find(e=>e.type==='commande'&&e.cmdNum===num);
     const dist=events.find(e=>e.type==='distribution'&&e.cmdNum===num);
     const group=document.createElement('div');group.className='ev-group';
     const title=document.createElement('div');title.className='ev-group-title';title.textContent=`N° ${num}`;
     group.appendChild(title);
-
     if(cmd){
       const p=(cmd.label||'').split('+').map(s=>s.trim()).filter(Boolean);
-      const item=makeEvItem(cmd.color,`Commande ${num}`,p[0]||'',`${fmtDate(cmd.start)} → ${fmtDate(cmd.end)}`,null,null);
-      group.appendChild(item);
+      group.appendChild(makeEvItem(cmd.color,`Commande ${num}`,p[0]||'',`${fmtDate(cmd.start)} → ${fmtDate(cmd.end)}`,null,null));
     }
     if(dist){
-      const item=makeEvItem(dist.color,`Distribution ${num}`,'',fmtDate(dist.start),null,null);
-      group.appendChild(item);
+      group.appendChild(makeEvItem(dist.color,`Distribution ${num}`,'',fmtDate(dist.start),null,null));
     }
-    if(!cmd&&!dist) return;
-    // Boutons groupe
+    if(!cmd&&!dist) return null;
     const grpBtns=document.createElement('div');grpBtns.style.cssText='display:flex;gap:4px;margin-top:4px';
     const editGrp=document.createElement('button');editGrp.className='btn';editGrp.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1';
-    editGrp.textContent=`✏️ Modifier n° ${num}`;editGrp.onclick=()=>editCmdGroup(num);
+    editGrp.textContent=`✏️ Modifier`;editGrp.onclick=()=>editCmdGroup(num);
     const delGrp=document.createElement('button');delGrp.className='btn danger';delGrp.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1';
-    delGrp.textContent=`✕ Supprimer`;delGrp.onclick=()=>deleteCmdGroup(num);
+    delGrp.textContent=`✕ Suppr.`;delGrp.onclick=()=>deleteCmdGroup(num);
     grpBtns.appendChild(editGrp);grpBtns.appendChild(delGrp);
     group.appendChild(grpBtns);
-    container.appendChild(group);
-  });
+    return group;
+  }
 
-  // Libres
-  if(libres.length){
+  // À VENIR
+  futureNums.forEach(num=>{const g=renderGroup(num);if(g)container.appendChild(g);});
+  if(futureLibres.length){
     const group=document.createElement('div');group.className='ev-group';
-    const title=document.createElement('div');title.className='ev-group-title';title.textContent='Événements libres';
-    group.appendChild(title);
-    libres.forEach(ev=>{
+    group.appendChild(Object.assign(document.createElement('div'),{className:'ev-group-title',textContent:'Événements libres'}));
+    futureLibres.forEach(ev=>{
       const p=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
-      const item=makeEvItem(ev.color,p[0]||'',p[1]||'',`${fmtDate(ev.start)} → ${fmtDate(ev.end)}`,()=>editLibre(ev.id),()=>deleteLibre(ev.id));
-      group.appendChild(item);
+      group.appendChild(makeEvItem(ev.color,p[0]||'',p[1]||'',`${fmtDate(ev.start)} → ${fmtDate(ev.end)}`,()=>editLibre(ev.id),()=>deleteLibre(ev.id)));
     });
     container.appendChild(group);
+  }
+
+  // PASSÉS
+  if(pastNums.length||pastLibres.length){
+    const pastSection=document.createElement('div');pastSection.className='past-section';
+    const pastTitle=document.createElement('div');pastTitle.className='past-title';pastTitle.textContent='Événements passés';
+    pastSection.appendChild(pastTitle);
+    pastNums.forEach(num=>{const g=renderGroup(num);if(g){g.style.opacity='.55';pastSection.appendChild(g);}});
+    pastLibres.forEach(ev=>{
+      const p=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
+      const item=makeEvItem(ev.color,p[0]||'',p[1]||'',`${fmtDate(ev.start)} → ${fmtDate(ev.end)}`,()=>editLibre(ev.id),()=>deleteLibre(ev.id));
+      item.style.opacity='.55';pastSection.appendChild(item);
+    });
+    container.appendChild(pastSection);
   }
 }
 
