@@ -3,27 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendrier 4 Mois</title>
+<title>Calendrier Cabas Liassois</title>
 
-<!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, onValue, remove }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  // ══════════════════════════════════════════════════════
-  //  🔧 CONFIGURATION FIREBASE — remplacez par vos valeurs
-  // ══════════════════════════════════════════════════════
   const firebaseConfig = {
-    apiKey:            "AIzaSyCgZjS47NCGWWJScgIyWki0XSubBFmVUdk",
-    authDomain:        "calendrier-cabas-liassoi-be21d.firebaseapp.com",
-    databaseURL:       "https://calendrier-cabas-liassoi-be21d-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId:         "calendrier-cabas-liassoi-be21d",
-    storageBucket:     "calendrier-cabas-liassoi-be21d.firebasestorage.app",
-    messagingSenderId: "427249595179",
-    appId:             "1:427249595179:web:b908f814e6e9fd88d98b6e"
+    apiKey:"AIzaSyCgZjS47NCGWWJScgIyWki0XSubBFmVUdk",
+    authDomain:"calendrier-cabas-liassoi-be21d.firebaseapp.com",
+    databaseURL:"https://calendrier-cabas-liassoi-be21d-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"calendrier-cabas-liassoi-be21d",
+    storageBucket:"calendrier-cabas-liassoi-be21d.firebasestorage.app",
+    messagingSenderId:"427249595179",
+    appId:"1:427249595179:web:b908f814e6e9fd88d98b6e"
   };
-
   try {
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
@@ -31,38 +25,29 @@
     window._fb = { db, ref, set, onValue, remove, eventsRef };
     window._fbReady = true;
     document.dispatchEvent(new Event('firebase-ready'));
-  } catch(e) {
-    document.dispatchEvent(new Event('firebase-failed'));
-  }
+  } catch(e) { document.dispatchEvent(new Event('firebase-failed')); }
 </script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
   --bg:#f5f4f0;--surface:#fff;--border:#ddd;--text:#1a1a1a;
   --muted:#666;--accent:#c0392b;--weekend:#e8e8e8;
   --navy:#2c3e50;--green:#27ae60;--radius:4px;
   --shadow:0 2px 12px rgba(0,0,0,.08);
 }
-
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:12px}
-
-/* TOP BAR ADMIN */
 .topbar{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
-
 .btn-sm{padding:5px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text);transition:all .15s}
 .btn-sm:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-
 .statusbar{font-size:.72rem;color:var(--muted);margin-left:auto}
 .statusbar.ok{color:var(--green)}.statusbar.err{color:var(--accent)}
 
-/* MODAL */
+/* MODAL LOGIN */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000}
 .modal-overlay.hidden{display:none}
-.modal{background:var(--surface);border-radius:10px;padding:28px 32px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal{background:var(--surface);border-radius:10px;padding:28px 32px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
 .modal h2{font-size:1rem;font-weight:700;margin-bottom:16px}
 .modal input[type=password]{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.84rem;margin-bottom:12px;outline:none}
 .modal input:focus{border-color:var(--navy)}
@@ -70,81 +55,78 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .modal-err{color:var(--accent);font-size:.76rem;margin-bottom:8px;display:none}
 .modal-err.show{display:block}
 
-/* LAYOUT */
-.layout{display:flex;gap:24px;align-items:flex-start}
-
-/* CALENDRIER TABLE */
-.calendar-wrap{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-width:0}
-.cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
-col.col-num{width:22px}
-col.col-day{width:30px}
-col.col-lbl{width:auto}
-.cal-table thead tr th.th-month{background:var(--navy);color:#fff;text-align:center;padding:8px 4px;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid #3d556b}
-.cal-table thead tr th.th-month:last-child{border-right:none}
-.cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
-.td-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);text-align:right;padding:2px 3px 0;white-space:nowrap;font-weight:500;border-right:none!important}
-.td-name{font-size:.7rem;color:var(--muted);padding:3px 3px 0 4px;white-space:nowrap;border-right:none!important;border-left:none!important}
-.td-label{font-size:.88rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden;border-left:none!important}
-.td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.td-label .l2{display:block;font-weight:400;font-size:.78rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-tr.weekend td{background:var(--weekend)}
-tr.weekend .td-num{color:var(--accent);font-weight:700}
-td.ev-cell{border-left:none!important}
-
 /* NAV */
 .nav-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
 .nav-bar button{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text);transition:background .1s}
 .nav-bar button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
 .nav-bar span{font-size:.82rem;color:var(--muted);font-weight:500}
 
-/* PANNEAU COMMUN */
-.side-panel{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:20px;width:300px;flex-shrink:0}
+/* LAYOUT */
+.layout{display:flex;gap:24px;align-items:flex-start}
+
+/* CALENDRIER */
+.calendar-wrap{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-width:0}
+.cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.cal-table td{border:1px solid var(--border);padding:0;vertical-align:top;height:22px}
+.td-label{font-size:.88rem;font-weight:600;padding:2px 4px;line-height:1.25;text-align:center;vertical-align:middle;overflow:hidden}
+.td-label .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-label .l2{display:block;font-weight:400;font-size:.78rem;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+
+/* PANNEAU ADMIN */
+.side-panel{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:16px;width:310px;flex-shrink:0}
 .side-panel.hidden{display:none}
-.side-panel h2{font-size:.9rem;font-weight:600;margin-bottom:16px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--border);padding-bottom:8px}
+
+/* ONGLETS */
+.tabs{display:flex;gap:4px;margin-bottom:14px}
+.tab{flex:1;padding:7px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;background:#f8f8f8;color:var(--muted);text-align:center;transition:all .15s}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+.tab-content{display:none}.tab-content.active{display:block}
 
 /* FORM */
-.field{margin-bottom:12px}
-label{display:block;font-size:.74rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
-input[type=date],input[type=text]{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);background:#fafafa;transition:border-color .15s;outline:none}
-input[type=date]:focus,input[type=text]:focus{border-color:var(--navy);background:#fff}
-.hint{font-size:.68rem;color:#aaa;margin-top:3px;font-style:italic}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.field input[type=date],.field input[type=text],.field input[type=number]{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);background:#fafafa;outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--navy);background:#fff}
+.hint{font-size:.67rem;color:#aaa;margin-top:2px;font-style:italic}
+.sep{border:none;border-top:1px dashed var(--border);margin:10px 0}
 
-.color-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.swatch{width:26px;height:26px;border-radius:4px;cursor:pointer;border:2.5px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0}
+.color-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.swatch{width:24px;height:24px;border-radius:4px;cursor:pointer;border:2.5px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0}
 .swatch:hover{transform:scale(1.1)}
 .swatch.sel{border-color:var(--text);transform:scale(1.1)}
-.custom-color{display:flex;align-items:center;gap:6px;margin-top:6px}
-input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border-radius:4px;padding:2px;cursor:pointer;background:none}
+.custom-color{display:flex;align-items:center;gap:6px;margin-top:5px}
+input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border-radius:4px;padding:2px;cursor:pointer;background:none}
 
-.btn{width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:8px}
+.btn{width:100%;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:6px}
 .btn:hover{opacity:.85}
 .btn.danger{background:var(--accent);margin-top:4px}
+.btn.warning{background:#e67e22;margin-top:4px}
 
-.events-list{margin-top:16px;border-top:2px solid var(--border);padding-top:12px}
-.events-list h3{font-size:.74rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-.ev-item{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:4px;background:#f8f8f8;margin-bottom:6px;font-size:.76rem}
-.ev-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0;margin-top:2px}
+/* LISTE EVENTS */
+.events-list{margin-top:14px;border-top:2px solid var(--border);padding-top:10px}
+.events-list h3{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.ev-group{margin-bottom:8px}
+.ev-group-title{font-size:.68rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;padding:2px 0;border-bottom:1px solid #eee;margin-bottom:4px}
+.ev-item{display:flex;align-items:flex-start;gap:6px;padding:5px 6px;border-radius:4px;background:#f8f8f8;margin-bottom:4px;font-size:.74rem}
+.ev-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;margin-top:2px}
 .ev-info{flex:1;min-width:0}
-.ev-info strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev-info .sub{display:block;color:#888;font-size:.67rem;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev-info .dates{display:block;color:var(--muted);font-size:.68rem}
-.del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.9rem;padding:2px 4px;border-radius:2px;flex-shrink:0}
-.del-btn:hover{background:#fee;color:var(--accent)}
-.btn.edit{background:var(--green);margin-top:4px}
-.ev-edit-btn{background:none;border:none;cursor:pointer;color:#2980b9;font-size:.9rem;padding:2px 4px;border-radius:2px;flex-shrink:0}
-.ev-edit-btn:hover{background:#ebf5fb;color:#1a5276}
+.ev-info strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.75rem}
+.ev-info .sub{display:block;color:#888;font-size:.65rem;font-style:italic}
+.ev-info .dates{display:block;color:var(--muted);font-size:.66rem}
+.ev-actions{display:flex;gap:2px;flex-shrink:0}
+.del-btn,.edit-btn{background:none;border:none;cursor:pointer;font-size:.85rem;padding:2px 3px;border-radius:2px}
+.del-btn{color:var(--muted)}.del-btn:hover{background:#fee;color:var(--accent)}
+.edit-btn{color:#2980b9}.edit-btn:hover{background:#ebf5fb}
 .empty-msg{font-size:.72rem;color:#bbb;font-style:italic}
 
-/* LEGENDE VIEWER */
-.leg-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:.77rem}
-.leg-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;margin-top:2px}
+/* OUTIL DÉCALAGE */
+.shift-tool{background:#f0f4f8;border-radius:6px;padding:10px;margin-top:10px}
+.shift-tool p{font-size:.72rem;color:var(--muted);margin-bottom:6px}
+.shift-row{display:flex;gap:6px;align-items:center}
+.shift-row input{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none}
+.shift-row button{flex:1;padding:6px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:.76rem;font-weight:600;cursor:pointer}
 
-/* GUIDE */
-.guide{background:#fffbe6;border:1px solid #ffd000;border-radius:8px;padding:16px 20px;margin-top:32px;font-size:.78rem;line-height:1.65;max-width:900px}
-.guide h3{font-size:.88rem;margin-bottom:8px;color:#7a5800}
-.guide code{background:#fff3cd;border-radius:3px;padding:1px 5px;font-family:'DM Mono',monospace;font-size:.75rem}
-.guide ol{margin-left:18px}
-.guide li{margin-bottom:5px}
 .hidden{display:none!important}
 .version{position:fixed;bottom:6px;right:10px;font-size:.62rem;color:#bbb;font-family:'DM Mono',monospace;pointer-events:none}
 </style>
@@ -156,8 +138,7 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
   <div class="modal">
     <h2>🔐 Accès administrateur</h2>
     <p id="loginErr" class="modal-err">Mot de passe incorrect.</p>
-    <input type="password" id="pwdInput" placeholder="Mot de passe admin…"
-           onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" id="pwdInput" placeholder="Mot de passe admin…" onkeydown="if(event.key==='Enter')doLogin()">
     <div class="btn-row">
       <button class="btn" onclick="doLogin()" style="flex:1">Connexion</button>
       <button class="btn danger" onclick="closeLogin()" style="flex:1;margin-top:0">Annuler</button>
@@ -165,10 +146,10 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
   </div>
 </div>
 
-<!-- TOP BAR ADMIN uniquement -->
+<!-- TOP BAR ADMIN -->
 <div class="topbar hidden" id="adminBar">
   <span style="font-size:.8rem;font-weight:600;color:var(--muted)">🔧 Mode Admin</span>
-  <button class="btn-sm" id="logoutBtn" onclick="doLogout()">Déconnexion</button>
+  <button class="btn-sm" onclick="doLogout()">Déconnexion</button>
   <span class="statusbar" id="statusbar">⏳ Connexion…</span>
 </div>
 
@@ -185,66 +166,104 @@ input[type=color]{width:32px;height:32px;border:1.5px solid var(--border);border
     <table class="cal-table" id="calGrid"></table>
   </div>
 
-  <!-- FORMULAIRE ADMIN -->
+  <!-- PANNEAU ADMIN -->
   <div class="side-panel hidden" id="formPanel">
-    <h2 id="formTitle">Ajouter un événement</h2>
-    <div class="field"><label>Date début</label><input type="date" id="fStart" onchange="onStartChange()"></div>
-    <div class="field"><label>Date fin</label><input type="date" id="fEnd"></div>
-    <div class="field">
-      <label>Libellé</label>
-      <input type="text" id="fLabel" placeholder="Ex : Commande 72 + Fromage Savoie">
-      <p class="hint">Séparez par <strong>+</strong> pour afficher 2 lignes dans la case</p>
+
+    <!-- ONGLETS -->
+    <div class="tabs">
+      <div class="tab active" id="tabLibre" onclick="switchTab('libre')">Événement libre</div>
+      <div class="tab" id="tabCmd" onclick="switchTab('cmd')">Commande / Distri</div>
     </div>
-    <div class="field">
-      <label>Couleur de fond</label>
-      <div class="color-row" id="swatches"></div>
-      <div class="custom-color">
-        <input type="color" id="fColorPicker" value="#c0392b">
-        <span style="font-size:.72rem;color:var(--muted)">Couleur libre</span>
+
+    <!-- ONGLET LIBRE -->
+    <div class="tab-content active" id="contentLibre">
+      <div class="field"><label>Libellé</label>
+        <input type="text" id="lLabel" placeholder="Mon événement + détail">
+        <p class="hint">Séparez par <strong>+</strong> pour 2 lignes</p>
+      </div>
+      <div class="field"><label>Date début</label><input type="date" id="lStart" onchange="onLibreStartChange()"></div>
+      <div class="field"><label>Date fin</label><input type="date" id="lEnd"></div>
+      <div class="field">
+        <label>Couleur de fond</label>
+        <div class="color-row" id="lSwatches"></div>
+        <div class="custom-color"><input type="color" id="lColorPicker" value="#2980b9"><span style="font-size:.7rem;color:var(--muted)">Libre</span></div>
+      </div>
+      <div class="field">
+        <label>Couleur texte</label>
+        <div class="color-row" id="lTxtSwatches"></div>
+      </div>
+      <button class="btn" id="btnLibre" onclick="saveLibre()">＋ Ajouter</button>
+      <button class="btn danger hidden" id="btnLibreCancel" onclick="cancelEdit()">✕ Annuler</button>
+    </div>
+
+    <!-- ONGLET COMMANDE -->
+    <div class="tab-content" id="contentCmd">
+      <div class="field"><label>N° de commande</label><input type="number" id="cNum" min="1" placeholder="Ex : 72"></div>
+      <div class="field"><label>Libellé commande</label>
+        <input type="text" id="cLabel" placeholder="Fromage Savoie + détail">
+        <p class="hint">Séparez par <strong>+</strong> pour 2 lignes</p>
+      </div>
+      <div class="field"><label>Début commande</label><input type="date" id="cStart" onchange="onCmdStartChange()"></div>
+      <div class="field"><label>Fin commande</label><input type="date" id="cEnd"></div>
+      <div class="field">
+        <label>Couleur commande</label>
+        <div class="color-row" id="cSwatches"></div>
+        <div class="custom-color"><input type="color" id="cColorPicker" value="#27ae60" oninput="syncDistriColor()"><span style="font-size:.7rem;color:var(--muted)">Libre</span></div>
+      </div>
+      <hr class="sep">
+      <div class="field"><label>Date distribution</label><input type="date" id="dDate"></div>
+      <div class="field">
+        <label>Couleur distribution <span style="font-weight:400;font-style:italic">(défaut = commande)</span></label>
+        <div class="color-row" id="dSwatches"></div>
+        <div class="custom-color"><input type="color" id="dColorPicker" value="#27ae60"><span style="font-size:.7rem;color:var(--muted)">Libre</span></div>
+      </div>
+      <div class="field">
+        <label>Couleur texte</label>
+        <div class="color-row" id="cTxtSwatches"></div>
+      </div>
+      <button class="btn" id="btnCmd" onclick="saveCmd()">＋ Ajouter</button>
+      <button class="btn danger hidden" id="btnCmdCancel" onclick="cancelEdit()">✕ Annuler</button>
+
+      <!-- OUTIL DÉCALAGE -->
+      <div class="shift-tool">
+        <p>Insérer une commande et décaler les numéros suivants :</p>
+        <div class="shift-row">
+          <input type="number" id="shiftFrom" min="1" placeholder="À partir du n°">
+          <button onclick="shiftNumbers()">Décaler +1</button>
+        </div>
       </div>
     </div>
-    <div class="field">
-      <label>Couleur du texte</label>
-      <div class="color-row" id="textSwatches"></div>
-    </div>
-    <button class="btn" id="btnSave" onclick="saveEvent()">＋ Ajouter</button>
-    <button class="btn danger hidden" id="btnCancel" onclick="cancelEdit()" style="margin-top:4px">✕ Annuler la modification</button>
+
+    <!-- LISTE EVENTS -->
     <div class="events-list">
       <h3>Événements (<span id="evCount">0</span>)</h3>
       <div id="evList"><p class="empty-msg">Aucun événement</p></div>
     </div>
   </div>
-
-
-
 </div>
 
-<div class="version">v21 — 14/03/2025</div>
+<div class="version">v22 — 16/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
-//  CONFIG — changez le mot de passe !
-// ════════════════════════════════════════════
 const ADMIN_PWD = 'CabasLias2025';
-
-const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin',
-                'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const DAYS   = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
-
-const PALETTE = [
-  '#c0392b','#e67e22','#f1c40f','#27ae60',
-  '#2980b9','#8e44ad','#1abc9c','#2c3e50'
-];
+const PALETTE     = ['#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad','#1abc9c','#2c3e50'];
 const TXT_PALETTE = ['#ffffff','#000000','#f5f5f5','#1a1a1a'];
 
 let startOffset = 0;
 let events      = [];
 let isAdmin     = false;
 let fbReady     = false;
-let selColor    = '#c0392b';
-let selTxtColor = '#ffffff';
+let editingId   = null; // id de l'evt en cours d'édition (libre)
+let editingCmdNum = null; // numéro de commande en cours d'édition
 
-// ── Firebase ────────────────────────────────
+// Couleurs sélectionnées
+let lColor='#2980b9', lTxtColor='#ffffff';
+let cColor='#27ae60', dColor='#27ae60', cTxtColor='#ffffff';
+
+// ── Firebase ─────────────────────────────────
 function initFirebase() {
   const { onValue, eventsRef } = window._fb;
   onValue(eventsRef, snap => {
@@ -252,425 +271,459 @@ function initFirebase() {
     events = d ? Object.values(d) : [];
     renderAll();
     setStatus('✅ Synchronisé','ok');
-  }, () => {
-    setStatus('ℹ️ Mode local','');
-    loadLocal();
-  });
+  }, () => { setStatus('ℹ️ Mode local',''); loadLocal(); });
 }
-
 function saveFb() {
   if (!fbReady) { saveLocal(); return; }
   const { set, eventsRef } = window._fb;
-  const obj = {};
-  events.forEach(e => { obj[e.id] = e; });
-  set(eventsRef, obj)
-    .then(() => setStatus('✅ Sauvegardé','ok'))
+  const obj = {}; events.forEach(e => { obj[e.id] = e; });
+  set(eventsRef, obj).then(() => setStatus('✅ Sauvegardé','ok'))
     .catch(() => { saveLocal(); setStatus('⚠️ Sauvegarde locale',''); });
 }
-
 function delFb(id) {
   if (!fbReady) { saveLocal(); return; }
   const { ref, remove, db } = window._fb;
   remove(ref(db, 'events/' + id));
 }
-
 function saveLocal() { localStorage.setItem('calEvents', JSON.stringify(events)); }
-function loadLocal()  {
-  events = JSON.parse(localStorage.getItem('calEvents') || '[]');
-  renderAll();
-}
+function loadLocal()  { events = JSON.parse(localStorage.getItem('calEvents')||'[]'); renderAll(); }
+function setStatus(msg, cls) { const el=document.getElementById('statusbar'); el.textContent=msg; el.className='statusbar '+cls; }
 
-function setStatus(msg, cls) {
-  const el = document.getElementById('statusbar');
-  el.textContent = msg; el.className = 'statusbar ' + cls;
-}
-
-// ── Auth ─────────────────────────────────────
+// ── Auth ──────────────────────────────────────
 function openLogin()  { document.getElementById('loginModal').classList.remove('hidden'); document.getElementById('pwdInput').focus(); }
 function closeLogin() { document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginErr').classList.remove('show'); }
-
 function doLogin() {
   if (document.getElementById('pwdInput').value === ADMIN_PWD) {
-    isAdmin = true;
-    sessionStorage.setItem('calAdmin','1');
-    document.getElementById('pwdInput').value = '';
-    closeLogin();
-    applyMode();
-  } else {
-    document.getElementById('loginErr').classList.add('show');
-  }
+    isAdmin = true; sessionStorage.setItem('calAdmin','1');
+    document.getElementById('pwdInput').value = ''; closeLogin(); applyMode();
+  } else { document.getElementById('loginErr').classList.add('show'); }
 }
-
 function doLogout() {
-  isAdmin = false;
-  sessionStorage.removeItem('calAdmin');
-  // Retirer ?admin de l'URL sans recharger
-  const url = new URL(window.location);
-  url.searchParams.delete('admin');
-  window.history.replaceState({}, '', url);
-  applyMode();
+  isAdmin = false; sessionStorage.removeItem('calAdmin');
+  const url = new URL(window.location); url.searchParams.delete('admin');
+  window.history.replaceState({},'',url); applyMode();
 }
-
 function applyMode() {
-  const admin = isAdmin;
-  document.getElementById('adminBar').classList.toggle('hidden', !admin);
-  document.getElementById('formPanel').classList.toggle('hidden', !admin);
+  document.getElementById('adminBar').classList.toggle('hidden', !isAdmin);
+  document.getElementById('formPanel').classList.toggle('hidden', !isAdmin);
   renderAll();
 }
 
-// ── Swatches ─────────────────────────────────
-function buildSwatches() {
-  buildGroup('swatches', PALETTE, () => selColor, v => {
-    selColor = v;
-    document.getElementById('fColorPicker').value = v;
-  });
-  buildGroup('textSwatches', TXT_PALETTE, () => selTxtColor, v => { selTxtColor = v; }, true);
-
-  document.getElementById('fColorPicker').addEventListener('input', e => {
-    selColor = e.target.value;
-    document.querySelectorAll('#swatches .swatch').forEach(x => x.classList.remove('sel'));
-  });
+// ── Onglets ───────────────────────────────────
+let activeTab = 'libre';
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabLibre').classList.toggle('active', tab==='libre');
+  document.getElementById('tabCmd').classList.toggle('active', tab==='cmd');
+  document.getElementById('contentLibre').classList.toggle('active', tab==='libre');
+  document.getElementById('contentCmd').classList.toggle('active', tab==='cmd');
 }
 
-function buildGroup(containerId, colors, getSelected, setSelected, border) {
+// ── Swatches ──────────────────────────────────
+function buildSwatch(containerId, colors, getVal, setVal, border, pickerId) {
   const c = document.getElementById(containerId);
   colors.forEach(color => {
     const s = document.createElement('div');
-    s.className = 'swatch' + (color === getSelected() ? ' sel' : '');
-    s.style.background = color;
-    s.dataset.color = color;
-    if (border) s.style.border = color === '#ffffff' ? '2px solid #ccc' : '2px solid transparent';
-    s.onclick = () => {
-      c.querySelectorAll('.swatch').forEach(x => x.classList.remove('sel'));
-      s.classList.add('sel');
-      setSelected(color);
-    };
+    s.className = 'swatch' + (color===getVal()?' sel':'');
+    s.style.background = color; s.dataset.color = color;
+    if (border) s.style.border = color==='#ffffff'?'2px solid #ccc':'2px solid transparent';
+    s.onclick = () => { c.querySelectorAll('.swatch').forEach(x=>x.classList.remove('sel')); s.classList.add('sel'); setVal(color); if(pickerId) document.getElementById(pickerId).value=color; };
     c.appendChild(s);
   });
-}
-
-// ── Calendrier ───────────────────────────────
-function getNbMonths() {
-  return window.innerWidth < 700 ? 2 : 4;
-}
-
-function getMonths() {
-  const nb   = getNbMonths();
-  const now  = new Date();
-  const base = new Date(now.getFullYear(), now.getMonth() + startOffset, 1);
-  return Array.from({length: nb}, (_, i) => {
-    const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
-    return { year: d.getFullYear(), month: d.getMonth() };
-  });
-}
-
-const daysInMonth = (y, m) => new Date(y, m+1, 0).getDate();
-const toIso = (y, m, d) => `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-const fmtDate = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
-
-function evForDay(iso) {
-  return events.find(e => iso >= e.start && iso <= e.end) || null;
-}
-
-function parseLabel(raw) {
-  const p = raw.split('+').map(s => s.trim()).filter(Boolean);
-  return { l1: p[0] || '', l2: p[1] || '' };
-}
-
-function renderCalendar() {
-  const months  = getMonths();
-  const nb      = months.length;
-  const table   = document.getElementById('calGrid');
-  table.innerHTML = '';
-
-  const f = months[0], l = months[nb-1];
-  document.getElementById('rangeLabel').textContent =
-    `${MONTHS[f.month]} ${f.year} → ${MONTHS[l.month]} ${l.year}`;
-
-  // Colgroup : col-num fixe à 55px, col-lbl prend le reste
-  const cg = document.createElement('colgroup');
-  months.forEach(() => {
-    const cNum = document.createElement('col'); cNum.style.width = '55px';
-    const cLbl = document.createElement('col');
-    cg.appendChild(cNum); cg.appendChild(cLbl);
-  });
-  table.appendChild(cg);
-
-  // THEAD : 1 th par mois, colspan=2 (col-num + col-label)
-  const thead  = document.createElement('thead');
-  const hdrRow = document.createElement('tr');
-  months.forEach(({year, month}, idx) => {
-    const th = document.createElement('th');
-    th.colSpan = 2;
-    th.textContent = `${MONTHS[month]} ${year}`;
-    th.style.cssText = [
-      'background:var(--navy)',
-      'color:#fff',
-      'text-align:center',
-      'padding:8px 4px',
-      'font-size:.82rem',
-      'font-weight:600',
-      'text-transform:uppercase',
-      'letter-spacing:.08em',
-      idx < nb-1 ? 'border-right:1px solid #3d556b' : 'border-right:none'
-    ].join(';');
-    hdrRow.appendChild(th);
-  });
-  thead.appendChild(hdrRow);
-  table.appendChild(thead);
-
-  // Pré-calcul jours par mois
-  const monthsData = months.map(({year, month}) => {
-    const days = daysInMonth(year, month);
-    const arr  = [];
-    for (let d = 1; d <= days; d++) {
-      const iso = toIso(year, month, d);
-      const dow = new Date(year, month, d).getDay();
-      arr.push({ day: d, dow, iso, ev: evForDay(iso) });
-    }
-    return { year, month, days: arr };
-  });
-
-  const maxDays      = Math.max(...monthsData.map(m => m.days.length));
-  const tbody        = document.createElement('tbody');
-  const skippedUntil = monthsData.map(() => 0);
-
-  for (let i = 0; i < maxDays; i++) {
-    const tr = document.createElement('tr');
-
-    monthsData.forEach((mData, mIdx) => {
-      if (i >= mData.days.length) {
-        // Mois plus court : 2 cellules vides
-        const td = document.createElement('td');
-        td.colSpan = 2;
-        td.style.borderRight = mIdx < nb-1 ? '1px solid var(--border)' : '';
-        tr.appendChild(td);
-        return;
-      }
-
-      const { day, dow, iso, ev } = mData.days[i];
-      const wknd = dow === 0 || dow === 6;
-      const bg   = wknd ? 'var(--weekend)' : '#fff';
-      const clr  = wknd ? 'var(--accent)'  : 'var(--muted)';
-
-      // --- Cellule num+jour (largeur fixe 52px) ---
-      const tdNum = document.createElement('td');
-      tdNum.style.cssText = `width:52px;max-width:52px;background:${bg};color:${clr};white-space:nowrap;padding:2px 4px 0;border-right:none;vertical-align:middle`;
-
-      const numSpan  = document.createElement('span');
-      numSpan.style.cssText = "font-family:'DM Mono',monospace;font-size:.72rem;font-weight:" + (wknd?'700':'500');
-      numSpan.textContent = day;
-
-      const nameSpan = document.createElement('span');
-      nameSpan.style.cssText = 'font-size:.7rem;margin-left:4px;color:' + clr;
-      nameSpan.textContent = DAYS[dow];
-
-      tdNum.appendChild(numSpan);
-      tdNum.appendChild(nameSpan);
-      tr.appendChild(tdNum);
-
-      // --- Cellule label (prend le reste) ---
-      if (skippedUntil[mIdx] > i) return; // absorbée par rowspan
-
-      const tdLabel = document.createElement('td');
-      tdLabel.className = 'td-label';
-      tdLabel.style.background = bg;
-      if (mIdx < nb-1) tdLabel.style.borderRight = '1px solid var(--border)';
-
-      if (ev) {
-        const monthEnd = toIso(mData.year, mData.month, mData.days.length);
-        const evEnd    = ev.end < monthEnd ? ev.end : monthEnd;
-        const spanDays = Math.round((new Date(evEnd) - new Date(iso)) / 86400000) + 1;
-        if (spanDays > 1) {
-          tdLabel.rowSpan = spanDays;
-          skippedUntil[mIdx] = i + spanDays;
-        }
-        tdLabel.style.background    = ev.color;
-        tdLabel.style.color         = ev.textColor || '#fff';
-        tdLabel.style.verticalAlign = 'middle';
-
-        const { l1, l2 } = parseLabel(ev.label);
-        const s1 = document.createElement('span'); s1.className = 'l1'; s1.textContent = l1;
-        tdLabel.appendChild(s1);
-        if (l2) {
-          const s2 = document.createElement('span'); s2.className = 'l2'; s2.textContent = l2;
-          tdLabel.appendChild(s2);
-        }
-      }
-
-      tr.appendChild(tdLabel);
+  if (pickerId) {
+    document.getElementById(pickerId).addEventListener('input', e => {
+      setVal(e.target.value);
+      c.querySelectorAll('.swatch').forEach(x=>x.classList.remove('sel'));
     });
-
-    tbody.appendChild(tr);
   }
-
-  table.appendChild(tbody);
 }
 
-// ── Ajout / édition / suppression ───────────
-let editingId = null;
-
-function onStartChange() {
-  const s = document.getElementById('fStart').value;
-  const e = document.getElementById('fEnd').value;
-  if (s && (!e || e < s)) document.getElementById('fEnd').value = s;
+function buildAllSwatches() {
+  buildSwatch('lSwatches',   PALETTE,     ()=>lColor,    v=>{lColor=v;},    false, 'lColorPicker');
+  buildSwatch('lTxtSwatches',TXT_PALETTE, ()=>lTxtColor, v=>{lTxtColor=v;}, true);
+  buildSwatch('cSwatches',   PALETTE,     ()=>cColor,    v=>{cColor=v; dColor=v; document.getElementById('dColorPicker').value=v; refreshDSwatches();}, false, 'cColorPicker');
+  buildSwatch('dSwatches',   PALETTE,     ()=>dColor,    v=>{dColor=v;},    false, 'dColorPicker');
+  buildSwatch('cTxtSwatches',TXT_PALETTE, ()=>cTxtColor, v=>{cTxtColor=v;}, true);
+  document.getElementById('dColorPicker').addEventListener('input', e => {
+    dColor = e.target.value;
+    document.querySelectorAll('#dSwatches .swatch').forEach(x=>x.classList.remove('sel'));
+  });
 }
 
-function saveEvent() {
-  const start = document.getElementById('fStart').value;
-  const end   = document.getElementById('fEnd').value;
-  const label = document.getElementById('fLabel').value.trim();
-  if (!start || !end || !label) { alert('Remplissez tous les champs.'); return; }
-  if (start > end) { alert('Date début > date fin.'); return; }
+function refreshDSwatches() {
+  const c = document.getElementById('dSwatches');
+  c.querySelectorAll('.swatch').forEach(s => s.classList.toggle('sel', s.dataset.color===dColor));
+}
 
-  if (editingId !== null) {
-    const idx = events.findIndex(e => e.id === editingId);
-    if (idx !== -1) events[idx] = { id: editingId, start, end, label, color: selColor, textColor: selTxtColor };
-    editingId = null;
+function syncDistriColor() {
+  dColor = document.getElementById('cColorPicker').value;
+  document.getElementById('dColorPicker').value = dColor;
+  refreshDSwatches();
+}
+
+function setSwatchSel(containerId, color) {
+  document.querySelectorAll('#'+containerId+' .swatch').forEach(s => s.classList.toggle('sel', s.dataset.color===color));
+}
+
+// ── Formulaire Libre ──────────────────────────
+function onLibreStartChange() {
+  const s=document.getElementById('lStart').value, e=document.getElementById('lEnd').value;
+  if (s && (!e||e<s)) document.getElementById('lEnd').value=s;
+}
+
+function saveLibre() {
+  const label=document.getElementById('lLabel').value.trim();
+  const start=document.getElementById('lStart').value;
+  const end=document.getElementById('lEnd').value;
+  if (!label||!start||!end) { alert('Remplissez tous les champs.'); return; }
+  if (start>end) { alert('Date début > date fin.'); return; }
+
+  if (editingId!==null) {
+    const idx=events.findIndex(e=>e.id===editingId);
+    if (idx!==-1) events[idx]={...events[idx], label, start, end, color:lColor, textColor:lTxtColor};
+    editingId=null;
   } else {
-    events.push({ id: Date.now(), start, end, label, color: selColor, textColor: selTxtColor });
+    events.push({id:Date.now(), type:'libre', label, start, end, color:lColor, textColor:lTxtColor});
   }
-
-  saveFb();
-  resetForm();
-  renderAll();
+  saveFb(); resetForms(); renderAll();
 }
 
-function editEvent(id) {
-  const ev = events.find(e => e.id === id);
-  if (!ev) return;
-  editingId = id;
+// ── Formulaire Commande/Distri ────────────────
+function onCmdStartChange() {
+  const s=document.getElementById('cStart').value, e=document.getElementById('cEnd').value;
+  if (s && (!e||e<s)) document.getElementById('cEnd').value=s;
+}
 
-  document.getElementById('fStart').value = ev.start;
-  document.getElementById('fEnd').value   = ev.end;
-  document.getElementById('fLabel').value = ev.label;
+function saveCmd() {
+  const num   = parseInt(document.getElementById('cNum').value);
+  const label = document.getElementById('cLabel').value.trim();
+  const cStart= document.getElementById('cStart').value;
+  const cEnd  = document.getElementById('cEnd').value;
+  const dDate = document.getElementById('dDate').value;
 
-  // Couleur fond
-  selColor = ev.color;
-  document.getElementById('fColorPicker').value = ev.color;
-  document.querySelectorAll('#swatches .swatch').forEach(s => {
-    s.classList.toggle('sel', s.style.background === hexToRgb(ev.color) || s.dataset.color === ev.color);
-  });
-  // Couleur texte
-  selTxtColor = ev.textColor || '#ffffff';
-  document.querySelectorAll('#textSwatches .swatch').forEach(s => {
-    s.classList.toggle('sel', s.dataset.color === selTxtColor);
-  });
+  if (!num) { alert('Saisissez un numéro de commande.'); return; }
 
-  document.getElementById('formTitle').textContent = 'Modifier un événement';
-  document.getElementById('btnSave').textContent   = '✔ Enregistrer';
-  document.getElementById('btnCancel').classList.remove('hidden');
-  document.getElementById('formPanel').scrollIntoView({ behavior:'smooth', block:'start' });
+  // Supprimer anciens evt de ce numéro si édition
+  if (editingCmdNum!==null) {
+    events = events.filter(e => !(e.cmdNum===editingCmdNum && (e.type==='commande'||e.type==='distribution')));
+    editingCmdNum=null;
+  }
+
+  // Créer commande si données suffisantes
+  if (label && cStart && cEnd) {
+    events.push({
+      id: Date.now(), type:'commande', cmdNum:num,
+      label, start:cStart, end:cEnd,
+      color:cColor, textColor:cTxtColor
+    });
+  }
+  // Créer distribution si date fournie
+  if (dDate) {
+    events.push({
+      id: Date.now()+1, type:'distribution', cmdNum:num,
+      label:'', start:dDate, end:dDate,
+      color:dColor, textColor:cTxtColor
+    });
+  }
+
+  if (!label&&!dDate) { alert('Saisissez au moins un libellé ou une date de distribution.'); return; }
+
+  saveFb(); resetForms(); renderAll();
+}
+
+// ── Édition ───────────────────────────────────
+function editLibre(id) {
+  const ev=events.find(e=>e.id===id); if(!ev) return;
+  editingId=id; switchTab('libre');
+  document.getElementById('lLabel').value=ev.label||'';
+  document.getElementById('lStart').value=ev.start;
+  document.getElementById('lEnd').value=ev.end;
+  lColor=ev.color||'#2980b9'; lTxtColor=ev.textColor||'#ffffff';
+  document.getElementById('lColorPicker').value=lColor;
+  setSwatchSel('lSwatches',lColor); setSwatchSel('lTxtSwatches',lTxtColor);
+  document.getElementById('btnLibre').textContent='✔ Enregistrer';
+  document.getElementById('btnLibreCancel').classList.remove('hidden');
+  document.getElementById('formPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function editCmdGroup(num) {
+  const cmd  = events.find(e=>e.type==='commande'&&e.cmdNum===num);
+  const dist = events.find(e=>e.type==='distribution'&&e.cmdNum===num);
+  editingCmdNum=num; switchTab('cmd');
+  document.getElementById('cNum').value=num;
+  if (cmd) {
+    document.getElementById('cLabel').value=cmd.label||'';
+    document.getElementById('cStart').value=cmd.start;
+    document.getElementById('cEnd').value=cmd.end;
+    cColor=cmd.color||'#27ae60'; cTxtColor=cmd.textColor||'#ffffff';
+    document.getElementById('cColorPicker').value=cColor;
+    setSwatchSel('cSwatches',cColor); setSwatchSel('cTxtSwatches',cTxtColor);
+  }
+  if (dist) {
+    document.getElementById('dDate').value=dist.start;
+    dColor=dist.color||cColor;
+    document.getElementById('dColorPicker').value=dColor;
+    setSwatchSel('dSwatches',dColor);
+  }
+  document.getElementById('btnCmd').textContent='✔ Enregistrer';
+  document.getElementById('btnCmdCancel').classList.remove('hidden');
+  document.getElementById('formPanel').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function cancelEdit() {
-  editingId = null;
-  resetForm();
+  editingId=null; editingCmdNum=null; resetForms();
 }
 
-function resetForm() {
-  document.getElementById('fStart').value = '';
-  document.getElementById('fEnd').value   = '';
-  document.getElementById('fLabel').value = '';
-  selColor    = '#c0392b';
-  selTxtColor = '#ffffff';
-  document.getElementById('fColorPicker').value = '#c0392b';
-  document.querySelectorAll('#swatches .swatch').forEach((s,i) => s.classList.toggle('sel', i===0));
-  document.querySelectorAll('#textSwatches .swatch').forEach((s,i) => s.classList.toggle('sel', i===0));
-  document.getElementById('formTitle').textContent = 'Ajouter un événement';
-  document.getElementById('btnSave').textContent   = '＋ Ajouter';
-  document.getElementById('btnCancel').classList.add('hidden');
+function resetForms() {
+  // Libre
+  document.getElementById('lLabel').value='';
+  document.getElementById('lStart').value='';
+  document.getElementById('lEnd').value='';
+  lColor='#2980b9'; lTxtColor='#ffffff';
+  document.getElementById('lColorPicker').value=lColor;
+  setSwatchSel('lSwatches',lColor); setSwatchSel('lTxtSwatches',lTxtColor);
+  document.getElementById('btnLibre').textContent='＋ Ajouter';
+  document.getElementById('btnLibreCancel').classList.add('hidden');
+  // Cmd
+  document.getElementById('cNum').value='';
+  document.getElementById('cLabel').value='';
+  document.getElementById('cStart').value='';
+  document.getElementById('cEnd').value='';
+  document.getElementById('dDate').value='';
+  cColor='#27ae60'; dColor='#27ae60'; cTxtColor='#ffffff';
+  document.getElementById('cColorPicker').value=cColor;
+  document.getElementById('dColorPicker').value=dColor;
+  setSwatchSel('cSwatches',cColor); setSwatchSel('dSwatches',dColor); setSwatchSel('cTxtSwatches',cTxtColor);
+  document.getElementById('btnCmd').textContent='＋ Ajouter';
+  document.getElementById('btnCmdCancel').classList.add('hidden');
 }
 
-function hexToRgb(hex) {
-  // Pas utilisé pour la comparaison, juste utilitaire
-  return hex;
+// ── Suppression ───────────────────────────────
+function deleteLibre(id) {
+  if (!confirm('Supprimer cet événement ?')) return;
+  events=events.filter(e=>e.id!==id); delFb(id); if(!fbReady) saveLocal(); renderAll();
+}
+function deleteCmdGroup(num) {
+  if (!confirm(`Supprimer la commande ${num} et sa distribution ?`)) return;
+  const toDelete=events.filter(e=>e.cmdNum===num&&(e.type==='commande'||e.type==='distribution'));
+  toDelete.forEach(e=>delFb(e.id));
+  events=events.filter(e=>!(e.cmdNum===num&&(e.type==='commande'||e.type==='distribution')));
+  if(!fbReady) saveLocal(); renderAll();
 }
 
-function deleteEvent(id) {
-  if (editingId === id) cancelEdit();
-  events = events.filter(e => e.id !== id);
-  delFb(id);
-  if (!fbReady) saveLocal();
-  renderAll();
+// ── Décalage numéros ──────────────────────────
+function shiftNumbers() {
+  const from=parseInt(document.getElementById('shiftFrom').value);
+  if (!from||from<1) { alert('Saisissez un numéro valide.'); return; }
+  if (!confirm(`Décaler +1 tous les numéros >= ${from} ?`)) return;
+  events.forEach(e => { if ((e.type==='commande'||e.type==='distribution') && e.cmdNum>=from) e.cmdNum++; });
+  saveFb(); renderAll();
+  document.getElementById('shiftFrom').value='';
 }
 
-// ── Listes ───────────────────────────────────
-function renderEventList() {
-  const container = document.getElementById('evList');
-  document.getElementById('evCount').textContent = events.length;
-  if (!events.length) { container.innerHTML = '<p class="empty-msg">Aucun événement</p>'; return; }
-  container.innerHTML = '';
-  [...events].sort((a,b)=>a.start.localeCompare(b.start)).forEach(ev => {
-    const { l1, l2 } = parseLabel(ev.label);
-    const item = document.createElement('div'); item.className = 'ev-item';
-    const dot  = document.createElement('div'); dot.className = 'ev-dot'; dot.style.background = ev.color;
-    const info = document.createElement('div'); info.className = 'ev-info';
-    const datesHtml = `<span class="dates">${fmtDate(ev.start)} → ${fmtDate(ev.end)}</span>`;
-    if (l2) {
-      info.innerHTML = `<strong>${l1}</strong><span class="sub">${l2}</span>${datesHtml}`;
-    } else {
-      info.innerHTML = `<strong>${l1}</strong>${datesHtml}`;
+// ── Calendrier ────────────────────────────────
+function getNbMonths() { return window.innerWidth<700?2:4; }
+function getMonths() {
+  const nb=getNbMonths(), now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+startOffset,1);
+  return Array.from({length:nb},(_,i)=>{const d=new Date(base.getFullYear(),base.getMonth()+i,1);return{year:d.getFullYear(),month:d.getMonth()};});
+}
+const daysInMonth=(y,m)=>new Date(y,m+1,0).getDate();
+const toIso=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const fmtDate=iso=>{const[y,m,d]=iso.split('-');return`${d}/${m}/${y}`;};
+
+// Construit la liste des "blocs" à afficher pour un jour donné
+function eventsForDay(iso) {
+  const result = [];
+  // Événements libres et commandes
+  events.forEach(ev => {
+    if (ev.type==='libre'||ev.type==='commande'||!ev.type) {
+      if (iso>=ev.start && iso<=ev.end) result.push(ev);
     }
-    const edt = document.createElement('button'); edt.className = 'ev-edit-btn'; edt.textContent = '✏️';
-    edt.title = 'Modifier'; edt.onclick = () => editEvent(ev.id);
-    const del = document.createElement('button'); del.className = 'del-btn'; del.textContent = '✕';
-    del.title = 'Supprimer'; del.onclick = () => deleteEvent(ev.id);
-    item.appendChild(dot); item.appendChild(info); item.appendChild(edt); item.appendChild(del);
-    container.appendChild(item);
   });
+  // Distributions : grouper celles du même jour
+  const dists = events.filter(e=>e.type==='distribution'&&e.start===iso);
+  if (dists.length>0) {
+    // Créer un pseudo-événement groupé
+    const nums = dists.map(d=>d.cmdNum).sort((a,b)=>a-b);
+    result.push({
+      id:'dist_'+iso, type:'distribution_group',
+      nums, start:iso, end:iso,
+      color: dists[0].color,
+      textColor: dists[0].textColor||'#fff'
+    });
+  }
+  return result;
 }
 
-function renderLegend() {
-  const c = document.getElementById('legendList');
-  if (!events.length) { c.innerHTML = '<p class="empty-msg">Aucun événement</p>'; return; }
-  c.innerHTML = '';
-  [...events].sort((a,b)=>a.start.localeCompare(b.start)).forEach(ev => {
-    const { l1, l2 } = parseLabel(ev.label);
-    const item = document.createElement('div'); item.className = 'leg-item';
-    const dot  = document.createElement('div'); dot.className = 'leg-dot'; dot.style.background = ev.color;
-    const txt  = document.createElement('div');
-    txt.innerHTML = `<strong>${l1}</strong>${l2?`<br><span style="font-size:.68rem;color:#888">${l2}</span>`:''}<br><span style="font-size:.67rem;color:#aaa">${fmtDate(ev.start)} → ${fmtDate(ev.end)}</span>`;
-    item.appendChild(dot); item.appendChild(txt);
-    c.appendChild(item);
+function getDisplayLabel(ev) {
+  if (!ev.type||ev.type==='libre') {
+    const p=ev.label.split('+').map(s=>s.trim()).filter(Boolean);
+    return {l1:p[0]||'',l2:p[1]||''};
+  }
+  if (ev.type==='commande') {
+    const p=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
+    return {l1:`Commande ${ev.cmdNum}${p[0]?' - '+p[0]:''}`, l2:p[1]||''};
+  }
+  if (ev.type==='distribution_group') {
+    return {l1:'Distribution '+ev.nums.join(' / '), l2:''};
+  }
+  return {l1:'',l2:''};
+}
+
+function renderCalendar() {
+  const months=getMonths(), nb=months.length;
+  const table=document.getElementById('calGrid');
+  table.innerHTML='';
+  const f=months[0],l=months[nb-1];
+  document.getElementById('rangeLabel').textContent=`${MONTHS[f.month]} ${f.year} → ${MONTHS[l.month]} ${l.year}`;
+
+  // Colgroup
+  const cg=document.createElement('colgroup');
+  months.forEach(()=>{const c1=document.createElement('col');c1.style.width='55px';cg.appendChild(c1);cg.appendChild(document.createElement('col'));});
+  table.appendChild(cg);
+
+  // Thead
+  const thead=document.createElement('thead'),hdrRow=document.createElement('tr');
+  months.forEach(({year,month},idx)=>{
+    const th=document.createElement('th');th.colSpan=2;th.textContent=`${MONTHS[month]} ${year}`;
+    th.style.cssText=['background:var(--navy)','color:#fff','text-align:center','padding:8px 4px','font-size:.82rem','font-weight:600','text-transform:uppercase','letter-spacing:.08em',idx<nb-1?'border-right:1px solid #3d556b':'border-right:none'].join(';');
+    hdrRow.appendChild(th);
   });
+  thead.appendChild(hdrRow);table.appendChild(thead);
+
+  // Pré-calcul
+  const monthsData=months.map(({year,month})=>{
+    const days=daysInMonth(year,month),arr=[];
+    for(let d=1;d<=days;d++){const iso=toIso(year,month,d),dow=new Date(year,month,d).getDay();arr.push({day:d,dow,iso,evs:eventsForDay(iso)});}
+    return{year,month,days:arr};
+  });
+
+  const maxDays=Math.max(...monthsData.map(m=>m.days.length));
+  const tbody=document.createElement('tbody');
+  const skippedUntil=monthsData.map(()=>0);
+
+  for(let i=0;i<maxDays;i++){
+    const tr=document.createElement('tr');
+    monthsData.forEach((mData,mIdx)=>{
+      if(i>=mData.days.length){const td=document.createElement('td');td.colSpan=2;if(mIdx<nb-1)td.style.borderRight='1px solid var(--border)';tr.appendChild(td);return;}
+      const{day,dow,iso,evs}=mData.days[i];
+      const wknd=dow===0||dow===6;
+      const bg=wknd?'var(--weekend)':'#fff',clr=wknd?'var(--accent)':'var(--muted)';
+
+      // Cellule num+jour
+      const tdNum=document.createElement('td');
+      tdNum.style.cssText=`width:55px;max-width:55px;background:${bg};color:${clr};white-space:nowrap;padding:2px 4px 0;border-right:none;vertical-align:middle`;
+      const ns=document.createElement('span');ns.style.cssText="font-family:'DM Mono',monospace;font-size:.72rem;font-weight:"+(wknd?'700':'500');ns.textContent=day;
+      const ds=document.createElement('span');ds.style.cssText='font-size:.7rem;margin-left:4px;color:'+clr;ds.textContent=DAYS[dow];
+      tdNum.appendChild(ns);tdNum.appendChild(ds);tr.appendChild(tdNum);
+
+      // Cellule label
+      if(skippedUntil[mIdx]>i){return;}
+      const tdLabel=document.createElement('td');
+      tdLabel.className='td-label';
+      tdLabel.style.background=bg;
+      if(mIdx<nb-1)tdLabel.style.borderRight='1px solid var(--border)';
+
+      const ev=evs[0]; // premier evt du jour
+      if(ev){
+        const monthEnd=toIso(mData.year,mData.month,mData.days.length);
+        const evEnd=ev.end<monthEnd?ev.end:monthEnd;
+        const spanDays=Math.round((new Date(evEnd)-new Date(iso))/86400000)+1;
+        if(spanDays>1){tdLabel.rowSpan=spanDays;skippedUntil[mIdx]=i+spanDays;}
+        tdLabel.style.background=ev.color||'#ccc';
+        tdLabel.style.color=ev.textColor||'#fff';
+        tdLabel.style.verticalAlign='middle';
+        const{l1,l2}=getDisplayLabel(ev);
+        const s1=document.createElement('span');s1.className='l1';s1.textContent=l1;tdLabel.appendChild(s1);
+        if(l2){const s2=document.createElement('span');s2.className='l2';s2.textContent=l2;tdLabel.appendChild(s2);}
+      }
+      tr.appendChild(tdLabel);
+    });
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
 }
 
-function shiftMonths(d) { startOffset += d; renderCalendar(); }
+// ── Liste admin ───────────────────────────────
+function renderEventList() {
+  const container=document.getElementById('evList');
+  document.getElementById('evCount').textContent=events.length;
+  if(!events.length){container.innerHTML='<p class="empty-msg">Aucun événement</p>';return;}
+  container.innerHTML='';
 
-function renderAll() {
-  renderCalendar();
-  if (isAdmin) renderEventList();
+  // Grouper : commandes+distri par num, libres séparément
+  const cmdNums=[...new Set(events.filter(e=>e.type==='commande'||e.type==='distribution').map(e=>e.cmdNum))].sort((a,b)=>a-b);
+  const libres=events.filter(e=>!e.type||e.type==='libre').sort((a,b)=>a.start.localeCompare(b.start));
+
+  // Commandes
+  cmdNums.forEach(num=>{
+    const cmd=events.find(e=>e.type==='commande'&&e.cmdNum===num);
+    const dist=events.find(e=>e.type==='distribution'&&e.cmdNum===num);
+    const group=document.createElement('div');group.className='ev-group';
+    const title=document.createElement('div');title.className='ev-group-title';title.textContent=`N° ${num}`;
+    group.appendChild(title);
+
+    if(cmd){
+      const p=(cmd.label||'').split('+').map(s=>s.trim()).filter(Boolean);
+      const item=makeEvItem(cmd.color,`Commande ${num}${p[0]?' - '+p[0]:''}`,p[1]||'',`${fmtDate(cmd.start)} → ${fmtDate(cmd.end)}`,()=>editCmdGroup(num),null);
+      group.appendChild(item);
+    }
+    if(dist){
+      const item=makeEvItem(dist.color,`Distribution ${num}`,'',fmtDate(dist.start),()=>editCmdGroup(num),()=>deleteCmdGroup(num));
+      group.appendChild(item);
+    }
+    if(!cmd&&!dist) return;
+    // Bouton supprimer groupe
+    const delGrp=document.createElement('button');delGrp.className='btn danger';delGrp.style.cssText='margin-top:2px;padding:4px;font-size:.7rem';
+    delGrp.textContent=`✕ Supprimer commande ${num} + distribution`;
+    delGrp.onclick=()=>deleteCmdGroup(num);
+    group.appendChild(delGrp);
+    container.appendChild(group);
+  });
+
+  // Libres
+  if(libres.length){
+    const group=document.createElement('div');group.className='ev-group';
+    const title=document.createElement('div');title.className='ev-group-title';title.textContent='Événements libres';
+    group.appendChild(title);
+    libres.forEach(ev=>{
+      const p=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
+      const item=makeEvItem(ev.color,p[0]||'',p[1]||'',`${fmtDate(ev.start)} → ${fmtDate(ev.end)}`,()=>editLibre(ev.id),()=>deleteLibre(ev.id));
+      group.appendChild(item);
+    });
+    container.appendChild(group);
+  }
 }
 
-// ── Init ─────────────────────────────────────
-buildSwatches();
-
-// Restaurer session admin
-if (sessionStorage.getItem('calAdmin') === '1') isAdmin = true;
-
-// Accès admin via ?admin dans l'URL
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.has('admin') && !isAdmin) {
-  // Ouvre automatiquement la modal de login
-  document.addEventListener('DOMContentLoaded', () => openLogin());
-  setTimeout(() => openLogin(), 100);
+function makeEvItem(color,title,sub,dates,onEdit,onDel){
+  const item=document.createElement('div');item.className='ev-item';
+  const dot=document.createElement('div');dot.className='ev-dot';dot.style.background=color||'#ccc';
+  const info=document.createElement('div');info.className='ev-info';
+  info.innerHTML=`<strong>${title}</strong>${sub?`<span class="sub">${sub}</span>`:''}<span class="dates">${dates}</span>`;
+  const acts=document.createElement('div');acts.className='ev-actions';
+  const eBtn=document.createElement('button');eBtn.className='edit-btn';eBtn.textContent='✏️';eBtn.onclick=onEdit;acts.appendChild(eBtn);
+  if(onDel){const dBtn=document.createElement('button');dBtn.className='del-btn';dBtn.textContent='✕';dBtn.onclick=onDel;acts.appendChild(dBtn);}
+  item.appendChild(dot);item.appendChild(info);item.appendChild(acts);
+  return item;
 }
 
+function shiftMonths(d){startOffset+=d;renderCalendar();}
+function renderAll(){renderCalendar();if(isAdmin)renderEventList();}
+
+// ── Init ──────────────────────────────────────
+buildAllSwatches();
+if(sessionStorage.getItem('calAdmin')==='1') isAdmin=true;
+const urlParams=new URLSearchParams(window.location.search);
+if(urlParams.has('admin')&&!isAdmin) setTimeout(()=>openLogin(),100);
 applyMode();
 
-document.addEventListener('firebase-ready', () => { fbReady = true; initFirebase(); });
-document.addEventListener('firebase-failed', () => { setStatus('ℹ️ Mode local',''); loadLocal(); });
-setTimeout(() => {
-  if (!fbReady) { setStatus('ℹ️ Mode local',''); loadLocal(); }
-}, 1500);
+document.addEventListener('firebase-ready',()=>{fbReady=true;initFirebase();});
+document.addEventListener('firebase-failed',()=>{setStatus('ℹ️ Mode local','');loadLocal();});
+setTimeout(()=>{if(!fbReady){setStatus('ℹ️ Mode local','');loadLocal();}},1500);
 
-// Redessiner si rotation/resize
-let _lastNb = getNbMonths();
-window.addEventListener('resize', () => {
-  const nb = getNbMonths();
-  if (nb !== _lastNb) { _lastNb = nb; renderCalendar(); }
-});
+let _lastNb=getNbMonths();
+window.addEventListener('resize',()=>{const nb=getNbMonths();if(nb!==_lastNb){_lastNb=nb;renderCalendar();}});
 </script>
 </body>
 </html>
