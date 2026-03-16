@@ -120,7 +120,7 @@ h1{
   <li class="loading">Chargement…</li>
 </ul>
 
-<div class="version">liste-v2 — 14/03/2025</div>
+<div class="version">liste-v3 — 16/03/2026</div>
 
 <script>
 const DAYS_FR   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
@@ -133,67 +133,39 @@ function fmtDateLong(iso) {
   return `${DAYS_FR[dow]} ${d} ${MONTHS_FR[m-1]}`;
 }
 
-function parseLabel(raw) {
-  const p = raw.split('+').map(s => s.trim()).filter(Boolean);
-  return { l1: p[0] || '', l2: p[1] || '' };
-}
-
-// Extrait tous les numéros d'un libellé : "Distribution commandes 72 / 73" → ["72","73"]
-function extractNums(label) {
-  return [...label.matchAll(/\d+/g)].map(m => m[0]);
-}
-
-// Extrait le premier numéro uniquement
-function extractNum(label) {
-  const m = label.match(/\d+/);
-  return m ? m[0] : null;
-}
-
 function renderList(events) {
   const container = document.getElementById('listContainer');
   const today = new Date().toISOString().split('T')[0];
 
-  const commandes     = events.filter(ev => ev.label.trim().toLowerCase().startsWith('commande'));
-  const distributions = events.filter(ev => ev.label.trim().toLowerCase().startsWith('distribution'));
-
-  // Index commandes par numéro → { "70": ev, ... }
+  // Index commandes par numéro
   const cmdByNum = {};
-  commandes.forEach(ev => {
-    const num = extractNum(ev.label);
-    if (num) cmdByNum[num] = ev;
+  events.filter(e => e.type==='commande').forEach(e => { cmdByNum[e.cmdNum] = e; });
+
+  // Regrouper les distributions par date → { "2026-04-03": [dist70, dist71] }
+  const distsByDate = {};
+  events.filter(e => e.type==='distribution' && e.start >= today).forEach(e => {
+    if (!distsByDate[e.start]) distsByDate[e.start] = [];
+    distsByDate[e.start].push(e);
   });
 
   const lignes = [];
 
-  distributions.forEach(dist => {
-    // Ignorer distributions passées
-    if (dist.start < today) return;
+  // Pour chaque groupe de distributions à la même date
+  Object.entries(distsByDate).forEach(([date, dists]) => {
+    // Trier les distris par numéro
+    dists.sort((a,b) => a.cmdNum - b.cmdNum);
 
-    const nums = extractNums(dist.label);
+    dists.forEach(dist => {
+      const cmd = cmdByNum[dist.cmdNum];
+      const labelSource = cmd || dist; // commande en priorité, sinon distri
+      const rawLabel = labelSource.label || '';
+      const p = rawLabel.split('+').map(s => s.trim()).filter(Boolean);
+      const l1 = `Commande ${dist.cmdNum}`;
+      const l2 = p[0] || '';
 
-    if (nums.length === 0) {
-      // Distribution sans numéro → afficher avec libellé de la distri
-      const { l1, l2 } = parseLabel(dist.label);
-      lignes.push({ date: dist.start, l1, l2 });
-      return;
-    }
-
-    // Pour chaque numéro trouvé dans la distribution
-    nums.forEach(num => {
-      const cmd = cmdByNum[num];
-      if (cmd) {
-        // Cas principal : commande + distri → date distri + libellé commande
-        const { l1, l2 } = parseLabel(cmd.label);
-        lignes.push({ date: dist.start, l1, l2 });
-      } else {
-        // Distribution sans commande associée → libellé de la distri
-        const { l1, l2 } = parseLabel(dist.label);
-        lignes.push({ date: dist.start, l1, l2 });
-      }
+      lignes.push({ date, l1, l2 });
     });
   });
-
-  // Commandes sans distribution → on n'affiche pas (comme demandé)
 
   // Trier par date
   lignes.sort((a, b) => a.date.localeCompare(b.date));
