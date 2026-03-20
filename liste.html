@@ -120,7 +120,7 @@ h1{
   <li class="loading">Chargement…</li>
 </ul>
 
-<div class="version">liste-v3 — 16/03/2026</div>
+<div class="version">liste-v4 — 20/03/2026</div>
 
 <script>
 const DAYS_FR   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
@@ -136,6 +136,9 @@ function fmtDateLong(iso) {
 function renderList(events) {
   const container = document.getElementById('listContainer');
   const today = new Date().toISOString().split('T')[0];
+  const limit = new Date();
+  limit.setMonth(limit.getMonth() + 6);
+  const maxDate = limit.toISOString().split('T')[0];
 
   // Index commandes par numéro
   const cmdByNum = {};
@@ -143,7 +146,7 @@ function renderList(events) {
 
   // Regrouper les distributions par date → { "2026-04-03": [dist70, dist71] }
   const distsByDate = {};
-  events.filter(e => e.type==='distribution' && e.start >= today).forEach(e => {
+  events.filter(e => e.type==='distribution' && e.start >= today && e.start <= maxDate).forEach(e => {
     if (!distsByDate[e.start]) distsByDate[e.start] = [];
     distsByDate[e.start].push(e);
   });
