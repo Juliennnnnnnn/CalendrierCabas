@@ -131,22 +131,6 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
 </head>
 <body>
 
-<!-- MODAL MESSAGE WHATSAPP -->
-<div class="modal-overlay hidden" id="msgModal">
-  <div class="modal" style="width:500px;max-width:95vw">
-    <h2>📨 Message commande <span id="msgModalNum"></span></h2>
-    <div id="msgPreview" style="background:#f0f9eb;border:1px solid #c3e6cb;border-radius:6px;padding:12px;margin-bottom:12px;font-size:.84rem;line-height:1.7;white-space:pre-wrap;font-family:'DM Sans',sans-serif;max-height:280px;overflow-y:auto"></div>
-    <textarea id="msgEdit" style="width:100%;height:200px;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;line-height:1.6;resize:vertical;outline:none;display:none"></textarea>
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <button class="btn" onclick="toggleMsgEdit()" id="btnMsgToggle" style="flex:1;margin-top:0;background:#7f8c8d;padding:8px">✏️ Modifier</button>
-      <button class="btn" onclick="resetMsg()" style="flex:1;margin-top:0;background:#e67e22;padding:8px">↺ Réinitialiser</button>
-      <button class="btn" onclick="copyMsg()" style="flex:1;margin-top:0;padding:8px">📋 Copier</button>
-      <button class="btn danger" onclick="closeMsgModal()" style="flex:1;margin-top:0;padding:8px">✕ Fermer</button>
-    </div>
-    <p id="msgCopied" style="font-size:.72rem;color:var(--green);margin-top:6px;display:none">✅ Copié dans le presse-papier !</p>
-  </div>
-</div>
-
 <!-- MODAL LOGIN -->
 <div class="modal-overlay hidden" id="loginModal">
   <div class="modal">
@@ -220,9 +204,6 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
       </div>
       <div class="field"><label>Début commande</label><input type="date" id="cStart" onchange="onCmdStartChange()" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
       <div class="field"><label>Fin commande</label><input type="date" id="cEnd" autocomplete="off" data-lpignore="true" data-form-type="other"></div>
-      <div class="field"><label>URL commande</label>
-        <input type="text" id="cUrl" placeholder="https://cutt.ly/Commande72" autocomplete="off" data-lpignore="true" data-form-type="other">
-      </div>
       <div class="field">
         <label>Couleur commande</label>
         <div class="color-row" id="cSwatches"></div>
@@ -253,7 +234,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v31 — 16/03/2026</div>
+<div class="version">v31 — 20/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -411,7 +392,6 @@ function saveCmd() {
   const cStart= document.getElementById('cStart').value;
   const cEnd  = document.getElementById('cEnd').value;
   const dDate = document.getElementById('dDate').value;
-  const cUrl  = document.getElementById('cUrl').value.trim();
 
   if (!num) { alert('Saisissez un numéro de commande.'); return; }
   if (!label && !dDate) { alert('Saisissez au moins un libellé ou une date de distribution.'); return; }
@@ -438,7 +418,7 @@ function saveCmd() {
   }
 
   if (label && cStart && cEnd) {
-    events.push({id:Date.now(), type:'commande', cmdNum:num, label, url:cUrl, start:cStart, end:cEnd, color:cColor, textColor:cTxtColor});
+    events.push({id:Date.now(), type:'commande', cmdNum:num, label, start:cStart, end:cEnd, color:cColor, textColor:cTxtColor});
   }
   if (dDate) {
     events.push({id:Date.now()+1, type:'distribution', cmdNum:num, label:label||'', start:dDate, end:dDate, color:dColor, textColor:cTxtColor});
@@ -471,7 +451,6 @@ function editCmdGroup(num) {
     document.getElementById('cLabel').value=cmd.label||'';
     document.getElementById('cStart').value=cmd.start;
     document.getElementById('cEnd').value=cmd.end;
-    document.getElementById('cUrl').value=cmd.url||'';
     cColor=cmd.color||'#27ae60'; cTxtColor=cmd.textColor||'#ffffff';
     document.getElementById('cColorPicker').value=cColor;
     setSwatchSel('cSwatches',cColor); setSwatchSel('cTxtSwatches',cTxtColor);
@@ -506,7 +485,6 @@ function resetForms() {
   document.getElementById('cLabel').value='';
   document.getElementById('cStart').value='';
   document.getElementById('cEnd').value='';
-  document.getElementById('cUrl').value='';
   document.getElementById('dDate').value='';
   cColor='#27ae60'; dColor='#27ae60'; cTxtColor='#ffffff';
   document.getElementById('cColorPicker').value=cColor;
@@ -527,121 +505,6 @@ function deleteCmdGroup(num) {
   toDelete.forEach(e=>delFb(e.id));
   events=events.filter(e=>!(e.cmdNum===num&&(e.type==='commande'||e.type==='distribution')));
   if(!fbReady) saveLocal(); renderAll();
-}
-
-// ── Modal Message WhatsApp ────────────────────
-const DAYS_LONG  = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
-const MONTHS_LONG= ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-
-function fmtDateLong(iso) {
-  const [y,m,d] = iso.split('-').map(Number);
-  const dow = new Date(y,m-1,d).getDay();
-  return `${DAYS_LONG[dow]} ${d} ${MONTHS_LONG[m-1]}`;
-}
-
-let _currentMsgNum = null;
-let _defaultMsg = '';
-let _editMode = false;
-
-function generateMsg(num) {
-  const cmd  = events.find(e=>e.type==='commande'&&e.cmdNum===num);
-  const dist = events.find(e=>e.type==='distribution'&&e.cmdNum===num);
-  const label = (cmd?.label||'').split('+').map(s=>s.trim()).filter(Boolean)[0]||'';
-  const url   = cmd?.url||'';
-  const dateFin  = cmd?.end  ? fmtDateLong(cmd.end)  : '?';
-  const dateDist = dist?.start? fmtDateLong(dist.start): '?';
-
-  return `*Commande ${num} ouverte*\n` +
-    `Fin des commandes : *${dateFin} 21h00*\n` +
-    `Livraison : *${dateDist} (18h30-19h30)*\n` +
-    `Cliquez ici ${url} pour passer commande.\n\n` +
-    `Pour cette commande vous trouverez les produits ${label} et également nos fournisseurs habituels Terravie, FolizKombucha, Marty, JP alaux, ...\n \n` +
-    `Pour toutes questions sur un produit, sur le site web ... contactez nous par mail lecabas.liassois@gmail.com ou au *06.20.32.32.03*\n` +
-    `N'hésitez pas à transférer, tous les liassoises et liassois, habitants, travailleurs et parents d'enfants scolarisés à Lias peuvent commander.\n` +
-    `https://www.lecabasliassois.fr/`;
-}
-
-function renderMsgPreview(text) {
-  // Affiche les *gras* en vrai gras dans la preview
-  const html = text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*(.*?)\*/g,'<strong>$1</strong>')
-    .replace(/\n/g,'<br>');
-  document.getElementById('msgPreview').innerHTML = html;
-}
-
-function openMsgModal(num) {
-  _currentMsgNum = num;
-  _defaultMsg = generateMsg(num);
-  _editMode = false;
-  document.getElementById('msgModalNum').textContent = num;
-  document.getElementById('msgEdit').value = _defaultMsg;
-  document.getElementById('msgPreview').style.display = 'block';
-  document.getElementById('msgEdit').style.display = 'none';
-  document.getElementById('btnMsgToggle').textContent = '✏️ Modifier';
-  document.getElementById('msgCopied').style.display = 'none';
-  renderMsgPreview(_defaultMsg);
-  document.getElementById('msgModal').classList.remove('hidden');
-}
-
-function closeMsgModal() {
-  document.getElementById('msgModal').classList.add('hidden');
-}
-
-function toggleMsgEdit() {
-  _editMode = !_editMode;
-  if (_editMode) {
-    document.getElementById('msgEdit').value = document.getElementById('msgPreview').innerText
-      .replace(/<br>/g,'\n');
-    // Récupérer le texte brut depuis la preview
-    const raw = document.getElementById('msgEdit').value;
-    document.getElementById('msgPreview').style.display = 'none';
-    document.getElementById('msgEdit').style.display = 'block';
-    document.getElementById('btnMsgToggle').textContent = '👁 Aperçu';
-  } else {
-    const edited = document.getElementById('msgEdit').value;
-    document.getElementById('msgPreview').style.display = 'block';
-    document.getElementById('msgEdit').style.display = 'none';
-    document.getElementById('btnMsgToggle').textContent = '✏️ Modifier';
-    renderMsgPreview(edited);
-  }
-}
-
-function resetMsg() {
-  _defaultMsg = generateMsg(_currentMsgNum);
-  document.getElementById('msgEdit').value = _defaultMsg;
-  renderMsgPreview(_defaultMsg);
-  _editMode = false;
-  document.getElementById('msgPreview').style.display = 'block';
-  document.getElementById('msgEdit').style.display = 'none';
-  document.getElementById('btnMsgToggle').textContent = '✏️ Modifier';
-}
-
-function copyMsg() {
-  // Copier le texte brut avec les * (format WhatsApp)
-  const text = _editMode
-    ? document.getElementById('msgEdit').value
-    : _defaultMsg.replace(/\n/g,'\n'); // texte brut avec *
-
-  // Si en mode aperçu, reconstruire depuis _defaultMsg ou msgEdit
-  const toCopy = _editMode
-    ? document.getElementById('msgEdit').value
-    : document.getElementById('msgEdit').value || _defaultMsg;
-
-  navigator.clipboard.writeText(_editMode ? document.getElementById('msgEdit').value : _defaultMsg)
-    .then(() => {
-      document.getElementById('msgCopied').style.display = 'block';
-      setTimeout(()=>{ document.getElementById('msgCopied').style.display='none'; }, 3000);
-    })
-    .catch(() => {
-      // Fallback
-      const ta = document.createElement('textarea');
-      ta.value = _defaultMsg;
-      document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      document.getElementById('msgCopied').style.display = 'block';
-      setTimeout(()=>{ document.getElementById('msgCopied').style.display='none'; }, 3000);
-    });
 }
 
 // ── Calendrier ────────────────────────────────
@@ -829,14 +692,12 @@ function renderEventList() {
       group.appendChild(makeEvItem(dist.color,`Distribution ${num}`,'',fmtDate(dist.start),null,null));
     }
     if(!cmd&&!dist) return null;
-    const grpBtns=document.createElement('div');grpBtns.style.cssText='display:flex;gap:4px;margin-top:4px;flex-wrap:wrap';
-    const msgBtn=document.createElement('button');msgBtn.className='btn';msgBtn.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1;background:#16a085';
-    msgBtn.textContent='📨 Message';msgBtn.onclick=()=>openMsgModal(num);
+    const grpBtns=document.createElement('div');grpBtns.style.cssText='display:flex;gap:4px;margin-top:4px';
     const editGrp=document.createElement('button');editGrp.className='btn';editGrp.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1';
     editGrp.textContent=`✏️ Modifier`;editGrp.onclick=()=>editCmdGroup(num);
     const delGrp=document.createElement('button');delGrp.className='btn danger';delGrp.style.cssText='margin-top:0;padding:5px;font-size:.72rem;flex:1';
     delGrp.textContent=`✕ Suppr.`;delGrp.onclick=()=>deleteCmdGroup(num);
-    grpBtns.appendChild(msgBtn);grpBtns.appendChild(editGrp);grpBtns.appendChild(delGrp);
+    grpBtns.appendChild(editGrp);grpBtns.appendChild(delGrp);
     group.appendChild(grpBtns);
     return group;
   }

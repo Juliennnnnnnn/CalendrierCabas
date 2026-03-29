@@ -120,7 +120,7 @@ h1{
   <li class="loading">Chargement…</li>
 </ul>
 
-<div class="version">liste-v3 — 16/03/2026</div>
+<div class="version">liste-v4b — 20/03/2026</div>
 
 <script>
 const DAYS_FR   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
@@ -136,7 +136,6 @@ function fmtDateLong(iso) {
 function renderList(events) {
   const container = document.getElementById('listContainer');
   const today = new Date().toISOString().split('T')[0];
-
   // Index commandes par numéro
   const cmdByNum = {};
   events.filter(e => e.type==='commande').forEach(e => { cmdByNum[e.cmdNum] = e; });
