@@ -139,6 +139,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
     <textarea id="msgEdit" style="width:100%;height:200px;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.82rem;line-height:1.6;resize:vertical;outline:none;display:none"></textarea>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
       <button class="btn" onclick="toggleMsgEdit()" id="btnMsgToggle" style="flex:1;margin-top:0;background:#7f8c8d;padding:8px">✏️ Modifier</button>
+      <button class="btn" onclick="saveMsg()" style="flex:1;margin-top:0;background:#27ae60;padding:8px">💾 Sauvegarder</button>
       <button class="btn" onclick="resetMsg()" style="flex:1;margin-top:0;background:#e67e22;padding:8px">↺ Réinitialiser</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
@@ -150,6 +151,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
       <button class="btn danger" onclick="closeMsgModal()" style="flex:1;margin-top:0;padding:8px">✕ Fermer</button>
     </div>
     <p id="msgCopied" style="font-size:.72rem;color:var(--green);margin-top:6px;display:none">✅ Copié dans le presse-papier !</p>
+    <p id="msgSaved" style="font-size:.72rem;color:var(--green);margin-top:6px;display:none">💾 Message sauvegardé !</p>
   </div>
 </div>
 
@@ -259,7 +261,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v37 — 29/03/2026</div>
+<div class="version">v38 — 29/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -578,14 +580,19 @@ function renderMsgPreview(rawText) {
 
 function openMsgModal(num) {
   _currentMsgNum = num;
-  _currentMsgText = generateMsg(num);
   _editMode = false;
   document.getElementById('msgModalNum').textContent = num;
+  document.getElementById('msgCopied').style.display = 'none';
+  document.getElementById('msgSaved').style.display = 'none';
+
+  // Charger message sauvegardé si existant, sinon générer le défaut
+  const cmd = events.find(e=>e.type==='commande'&&e.cmdNum===num);
+  _currentMsgText = (cmd?.customMsg) ? cmd.customMsg : generateMsg(num);
+
   document.getElementById('msgEdit').value = _currentMsgText;
   document.getElementById('msgPreview').style.display = 'block';
   document.getElementById('msgEdit').style.display = 'none';
   document.getElementById('btnMsgToggle').textContent = '✏️ Modifier';
-  document.getElementById('msgCopied').style.display = 'none';
   renderMsgPreview(_currentMsgText);
   document.getElementById('msgModal').classList.remove('hidden');
 }
@@ -613,7 +620,25 @@ function toggleMsgEdit() {
   }
 }
 
+function saveMsg() {
+  if (_editMode) _currentMsgText = document.getElementById('msgEdit').value;
+  // Sauvegarder dans l'événement commande
+  const idx = events.findIndex(e=>e.type==='commande'&&e.cmdNum===_currentMsgNum);
+  if (idx !== -1) {
+    events[idx].customMsg = _currentMsgText;
+    saveFb();
+  }
+  document.getElementById('msgSaved').style.display = 'block';
+  setTimeout(()=>{ document.getElementById('msgSaved').style.display='none'; }, 3000);
+}
+
 function resetMsg() {
+  // Effacer le message sauvegardé et régénérer le défaut
+  const idx = events.findIndex(e=>e.type==='commande'&&e.cmdNum===_currentMsgNum);
+  if (idx !== -1) {
+    delete events[idx].customMsg;
+    saveFb();
+  }
   _currentMsgText = generateMsg(_currentMsgNum);
   document.getElementById('msgEdit').value = _currentMsgText;
   renderMsgPreview(_currentMsgText);
