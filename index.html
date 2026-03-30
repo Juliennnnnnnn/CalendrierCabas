@@ -140,7 +140,13 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
       <button class="btn" onclick="toggleMsgEdit()" id="btnMsgToggle" style="flex:1;margin-top:0;background:#7f8c8d;padding:8px">✏️ Modifier</button>
       <button class="btn" onclick="resetMsg()" style="flex:1;margin-top:0;background:#e67e22;padding:8px">↺ Réinitialiser</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <button class="btn" onclick="copyMsg()" style="flex:1;margin-top:0;padding:8px">📋 Copier</button>
+      <button class="btn" onclick="sendWhatsApp()" style="flex:1;margin-top:0;padding:8px;background:#25d366">💬 WhatsApp</button>
+      <button class="btn" onclick="sendGmail()" style="flex:1;margin-top:0;padding:8px;background:#ea4335">✉️ Gmail</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn danger" onclick="closeMsgModal()" style="flex:1;margin-top:0;padding:8px">✕ Fermer</button>
     </div>
     <p id="msgCopied" style="font-size:.72rem;color:var(--green);margin-top:6px;display:none">✅ Copié dans le presse-papier !</p>
@@ -253,7 +259,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v33 — 29/03/2026</div>
+<div class="version">v34 — 29/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -617,7 +623,20 @@ function resetMsg() {
   document.getElementById('btnMsgToggle').textContent = '✏️ Modifier';
 }
 
-function copyMsg() {
+function sendWhatsApp() {
+  if (_editMode) _currentMsgText = document.getElementById('msgEdit').value;
+  const encoded = encodeURIComponent(_currentMsgText);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+function sendGmail() {
+  if (_editMode) _currentMsgText = document.getElementById('msgEdit').value;
+  const cmd = events.find(e=>e.type==='commande'&&e.cmdNum===_currentMsgNum);
+  const subject = encodeURIComponent(`Commande ${_currentMsgNum} ouverte`);
+  // Gmail ne supporte pas le gras via mailto, on retire les *
+  const body = encodeURIComponent(_currentMsgText.replace(/\*/g,''));
+  window.open(`https://mail.google.com/mail/?view=cm&su=${subject}&body=${body}`, '_blank');
+}
   // Toujours copier le texte brut courant (avec les *)
   if (_editMode) _currentMsgText = document.getElementById('msgEdit').value;
   navigator.clipboard.writeText(_currentMsgText)
