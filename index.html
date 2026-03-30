@@ -259,7 +259,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v34 — 29/03/2026</div>
+<div class="version">v35 — 29/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -637,6 +637,8 @@ function sendGmail() {
   const body = encodeURIComponent(_currentMsgText.replace(/\*/g,''));
   window.open(`https://mail.google.com/mail/?view=cm&su=${subject}&body=${body}`, '_blank');
 }
+
+function copyMsg() {
   // Toujours copier le texte brut courant (avec les *)
   if (_editMode) _currentMsgText = document.getElementById('msgEdit').value;
   navigator.clipboard.writeText(_currentMsgText)
