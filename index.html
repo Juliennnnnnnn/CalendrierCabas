@@ -144,7 +144,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <button class="btn" onclick="copyMsg()" style="flex:1;margin-top:0;padding:8px">📋 Copier</button>
       <button class="btn" onclick="sendWhatsApp()" style="flex:1;margin-top:0;padding:8px;background:#25d366">💬 WhatsApp</button>
-      <button class="btn" onclick="sendGmail()" style="flex:1;margin-top:0;padding:8px;background:#ea4335">✉️ Gmail</button>
+      <button class="btn" onclick="sendGmail()" style="flex:1;margin-top:0;padding:8px;background:#ea4335">✉️ Mail</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn danger" onclick="closeMsgModal()" style="flex:1;margin-top:0;padding:8px">✕ Fermer</button>
@@ -259,7 +259,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v35 — 29/03/2026</div>
+<div class="version">v37 — 29/03/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -562,7 +562,7 @@ function generateMsg(num) {
     `Fin des commandes : *${dateFin} 21h00*\n` +
     `Livraison : *${dateDist} (18h30-19h30)*\n` +
     `Cliquez ici ${url} pour passer commande.\n\n` +
-    `Pour cette commande vous trouverez les produits ${label} et également nos fournisseurs habituels Terravie, FolizKombucha, Marty, JP alaux, ...\n \n` +
+    `Pour cette commande vous trouverez : *${label}* et également nos fournisseurs habituels Terravie, FolizKombucha, Marty, JP alaux, ...\n \n` +
     `Pour toutes questions sur un produit, sur le site web ... contactez nous par mail lecabas.liassois@gmail.com ou au *06.20.32.32.03*\n` +
     `N'hésitez pas à transférer, tous les liassoises et liassois, habitants, travailleurs et parents d'enfants scolarisés à Lias peuvent commander.\n` +
     `https://www.lecabasliassois.fr/`;
@@ -631,11 +631,9 @@ function sendWhatsApp() {
 
 function sendGmail() {
   if (_editMode) _currentMsgText = document.getElementById('msgEdit').value;
-  const cmd = events.find(e=>e.type==='commande'&&e.cmdNum===_currentMsgNum);
   const subject = encodeURIComponent(`Commande ${_currentMsgNum} ouverte`);
-  // Gmail ne supporte pas le gras via mailto, on retire les *
   const body = encodeURIComponent(_currentMsgText.replace(/\*/g,''));
-  window.open(`https://mail.google.com/mail/?view=cm&su=${subject}&body=${body}`, '_blank');
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
 }
 
 function copyMsg() {
