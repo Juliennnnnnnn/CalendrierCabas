@@ -261,7 +261,7 @@ input[type=color]{width:30px;height:30px;border:1.5px solid var(--border);border
   </div><!-- /admin-wrap -->
 </div>
 
-<div class="version">v38 — 29/03/2026</div>
+<div class="version">v41 — 28/04/2026</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -687,7 +687,7 @@ const daysInMonth=(y,m)=>new Date(y,m+1,0).getDate();
 const toIso=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 const fmtDate=iso=>{const[y,m,d]=iso.split('-');return`${d}/${m}/${y}`;};
 
-// Construit la liste des "blocs" à afficher pour un jour donné
+// Construit la liste des événements à afficher pour un jour donné
 function eventsForDay(iso) {
   const result = [];
   // Événements libres et commandes
@@ -696,45 +696,51 @@ function eventsForDay(iso) {
       if (iso>=ev.start && iso<=ev.end) result.push(ev);
     }
   });
-  // Distributions : grouper celles du même jour
+  // Distributions : chacune séparément, triées par numéro
   const dists = events.filter(e=>e.type==='distribution'&&e.start===iso);
-  if (dists.length>0) {
-    // Créer un pseudo-événement groupé
-    const nums = dists.map(d=>d.cmdNum).sort((a,b)=>a-b);
-    result.push({
-      id:'dist_'+iso, type:'distribution_group',
-      nums, start:iso, end:iso,
-      color: dists[0].color,
-      textColor: dists[0].textColor||'#fff'
-    });
-  }
+  dists.sort((a,b)=>a.cmdNum-b.cmdNum);
+  result.push(...dists);
   return result;
 }
 
-function getDisplayLabel(ev) {
+function getDisplayLines(ev) {
   if (!ev.type||ev.type==='libre') {
-    const p=ev.label.split('+').map(s=>s.trim()).filter(Boolean);
-    return {l1:p[0]||'',l2:p[1]||''};
+    return (ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
   }
   if (ev.type==='commande') {
-    const p=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
-    return {l1:`Commande ${ev.cmdNum}`, l2:p[0]||''};
+    const parts=(ev.label||'').split('+').map(s=>s.trim()).filter(Boolean);
+    return [`Commande ${ev.cmdNum}`, ...parts];
+  }
+  if (ev.type==='distribution') {
+    const lines=[`Distribution ${ev.cmdNum}`];
+    // Chercher le libellé dans la commande liée, sinon dans la distri elle-même
+    const cmd=events.find(e=>e.type==='commande'&&e.cmdNum===ev.cmdNum);
+    const src=cmd||ev;
+    if(src&&src.label){
+      const parts=src.label.split('+').map(s=>s.trim()).filter(Boolean);
+      lines.push(...parts);
+    }
+    return lines;
   }
   if (ev.type==='distribution_group') {
-    // Chercher un libellé dans les commandes liées, sinon dans le label stocké
-    const l2parts = ev.nums.map(num => {
-      const cmd = events.find(e => e.type==='commande' && e.cmdNum===num);
-      if (cmd && cmd.label) {
-        const p = cmd.label.split('+').map(s=>s.trim()).filter(Boolean);
-        return p[0]||'';
+    const lines=[`Distribution ${ev.nums.join(' / ')}`];
+    if(ev.nums.length===1){
+      const num=ev.nums[0];
+      const cmd=events.find(e=>e.type==='commande'&&e.cmdNum===num);
+      const src=cmd||events.find(e=>e.type==='distribution'&&e.cmdNum===num);
+      if(src&&src.label){
+        const parts=src.label.split('+').map(s=>s.trim()).filter(Boolean);
+        lines.push(...parts);
       }
-      // Pas de commande → utiliser le label prévu stocké dans la distri
-      const dist = events.find(e => e.type==='distribution' && e.cmdNum===num);
-      return (dist && dist.label) ? dist.label.split('+')[0].trim() : '';
-    }).filter(Boolean);
-    return {l1:'Distribution '+ev.nums.join(' / '), l2: l2parts.length===1 ? l2parts[0] : ''};
+    }
+    return lines;
   }
-  return {l1:'',l2:''};
+  return [ev.label||''];
+}
+
+function getDisplayLabel(ev) {
+  const lines=getDisplayLines(ev);
+  return {l1:lines[0]||'',l2:lines[1]||''};
 }
 
 function renderCalendar() {
@@ -787,22 +793,47 @@ function renderCalendar() {
       // Cellule label
       if(skippedUntil[mIdx]>i){return;}
       const tdLabel=document.createElement('td');
-      tdLabel.className='td-label';
-      tdLabel.style.background=bg;
-      if(mIdx<nb-1)tdLabel.style.borderRight='1px solid var(--border)';
+      tdLabel.style.cssText='border-left:none;padding:0;overflow:hidden;vertical-align:top;'+(mIdx<nb-1?'border-right:1px solid var(--border)':'');
 
-      const ev=evs[0]; // premier evt du jour
-      if(ev){
+      const evs_filtered = evs.filter(ev=>ev); 
+
+      if(evs_filtered.length===0){
+        // Pas d'événement — fond normal
+        tdLabel.style.background=bg;
+        tdLabel.style.minHeight='22px';
+      } else if(evs_filtered.length===1){
+        // Un seul événement → comportement actuel avec rowspan
+        const ev=evs_filtered[0];
         const monthEnd=toIso(mData.year,mData.month,mData.days.length);
         const evEnd=ev.end<monthEnd?ev.end:monthEnd;
         const spanDays=Math.round((new Date(evEnd)-new Date(iso))/86400000)+1;
         if(spanDays>1){tdLabel.rowSpan=spanDays;skippedUntil[mIdx]=i+spanDays;}
         tdLabel.style.background=ev.color||'#ccc';
-        tdLabel.style.color=ev.textColor||'#fff';
         tdLabel.style.verticalAlign='middle';
-        const{l1,l2}=getDisplayLabel(ev);
-        const s1=document.createElement('span');s1.className='l1';s1.textContent=l1;tdLabel.appendChild(s1);
-        if(l2){const s2=document.createElement('span');s2.className='l2';s2.textContent=l2;tdLabel.appendChild(s2);}
+
+        // Construire les lignes depuis le libellé
+        const lines=getDisplayLines(ev);
+        lines.forEach((line,idx)=>{
+          const s=document.createElement('span');
+          s.style.cssText='display:block;font-size:'+(idx===0?'.88rem':'.78rem')+';font-weight:'+(idx===0?'600':'400')+';color:'+(ev.textColor||'#fff')+';text-align:center;padding:'+(idx===0?'2px 4px 0':'0 4px 2px')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:'+(idx===0?'1':'.9');
+          s.textContent=line;
+          tdLabel.appendChild(s);
+        });
+      } else {
+        // Plusieurs événements → blocs empilés, pas de rowspan
+        tdLabel.style.background=bg;
+        evs_filtered.forEach((ev,evIdx)=>{
+          const bloc=document.createElement('span');
+          bloc.style.cssText='display:block;box-sizing:border-box;width:100%;background:'+(ev.color||'#ccc')+';padding:3px 4px;overflow:hidden;'+(evIdx>0?'margin-top:1px':'');
+          const lines=getDisplayLines(ev);
+          lines.forEach((line,idx)=>{
+            const s=document.createElement('span');
+            s.style.cssText='display:block;font-size:'+(idx===0?'.82rem':'.72rem')+';font-weight:'+(idx===0?'600':'400')+';color:'+(ev.textColor||'#fff')+';text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;opacity:'+(idx===0?'1':'.9');
+            s.textContent=line;
+            bloc.appendChild(s);
+          });
+          tdLabel.appendChild(bloc);
+        });
       }
       tr.appendChild(tdLabel);
     });
